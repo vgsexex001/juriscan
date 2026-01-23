@@ -119,7 +119,7 @@ export default function RegisterPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Seu nome"
                 disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 border border-border rounded-input text-text-input focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
                 style={{
                   fontSize: "16px",
                   lineHeight: "24px",
@@ -146,7 +146,7 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 border border-border rounded-input text-text-input focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
                 style={{
                   fontSize: "16px",
                   lineHeight: "24px",
@@ -173,7 +173,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 border border-border rounded-input text-text-input focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
                 style={{
                   fontSize: "16px",
                   lineHeight: "24px",
@@ -200,7 +200,7 @@ export default function RegisterPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 border border-border rounded-input text-text-input focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
+                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
                 style={{
                   fontSize: "16px",
                   lineHeight: "24px",
