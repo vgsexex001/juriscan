@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Menu,
   Scale,
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-import WelcomeModal from "@/components/WelcomeModal";
 import MetricCard from "@/components/MetricCard";
 import MemoryCard from "@/components/MemoryCard";
 import PriorityActions from "@/components/PriorityActions";
@@ -159,24 +157,8 @@ const analysesData = [
 ];
 
 export default function DashboardPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const termsAccepted = localStorage.getItem("termsAccepted");
-    if (!termsAccepted) {
-      setIsModalOpen(true);
-    }
-  }, []);
-
-  const handleAcceptTerms = () => {
-    setIsModalOpen(false);
-  };
-
-  if (!mounted) {
-    return null;
-  }
+  // Modal de termos agora é gerenciado globalmente em lib/providers.tsx (TermsGate)
+  // Tour é iniciado automaticamente após aceitar termos
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -242,9 +224,6 @@ export default function DashboardPage() {
           <AnalysesTable analyses={analysesData} />
         </main>
       </div>
-
-      {/* Welcome Modal */}
-      {isModalOpen && <WelcomeModal onAccept={handleAcceptTerms} />}
     </div>
   );
 }

@@ -101,6 +101,7 @@ export function TourProvider({ children }: TourProviderProps) {
   // Função para verificar se deve iniciar o tour
   const checkAndStartTour = useCallback((isLoggedIn: boolean) => {
     const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
+    const termsAccepted = localStorage.getItem("termsAccepted");
 
     setHasCompletedTour(tourCompleted === "true");
 
@@ -108,8 +109,9 @@ export function TourProvider({ children }: TourProviderProps) {
     // 1. Tour nunca foi completado
     // 2. Usuário está logado
     // 3. Não está em uma rota de autenticação
+    // 4. Termos já foram aceitos (para não conflitar com WelcomeModal)
     const isAuthRoute = AUTH_ROUTES.includes(pathname);
-    if (!tourCompleted && isLoggedIn && !isAuthRoute) {
+    if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted === "true") {
       setCurrentStepIndex(0);
       setIsTourActive(true);
     }
@@ -130,15 +132,19 @@ export function TourProvider({ children }: TourProviderProps) {
     checkInitialSession();
 
     // Escutar mudanças de autenticação (login/logout)
+    // O tour será iniciado pelo WelcomeModal após aceitar termos
+    // para evitar race condition e garantir ordem correta
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Quando usuário faz login, iniciar tour diretamente
+        // Quando usuário faz login, verificar se deve iniciar tour
         if (event === "SIGNED_IN" && session?.user) {
           const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
+          const termsAccepted = localStorage.getItem("termsAccepted");
           const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
-          if (!tourCompleted && !isAuthRoute) {
-            // Pequeno delay para garantir que a navegação completou
+          // Só iniciar tour automaticamente se termos já foram aceitos
+          // Caso contrário, o WelcomeModal irá iniciar o tour após aceite
+          if (!tourCompleted && !isAuthRoute && termsAccepted === "true") {
             setTimeout(() => {
               setCurrentStepIndex(0);
               setIsTourActive(true);

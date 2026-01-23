@@ -10,6 +10,7 @@ import {
   UserCheck,
   Check,
 } from "lucide-react";
+import { useTour } from "@/hooks/useTour";
 
 interface WelcomeModalProps {
   onAccept: () => void;
@@ -80,6 +81,7 @@ const infoItems = [
 export default function WelcomeModal({ onAccept }: WelcomeModalProps) {
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { startTour, hasCompletedTour } = useTour();
 
   useEffect(() => {
     setMounted(true);
@@ -89,6 +91,11 @@ export default function WelcomeModal({ onAccept }: WelcomeModalProps) {
     if (isTermsAccepted) {
       localStorage.setItem("termsAccepted", "true");
       onAccept();
+
+      // Iniciar tour automaticamente se nunca foi completado
+      if (!hasCompletedTour) {
+        setTimeout(() => startTour(), 500);
+      }
     }
   };
 

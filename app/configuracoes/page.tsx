@@ -10,10 +10,12 @@ import SecuritySettings from "@/components/SecuritySettings";
 import PlanSettings from "@/components/PlanSettings";
 import PrivacySettings from "@/components/PrivacySettings";
 import TermsSettings from "@/components/TermsSettings";
+import { useTour } from "@/hooks/useTour";
 
 export default function ConfiguracoesPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("perfil");
+  const { resetTour } = useTour();
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +65,7 @@ export default function ConfiguracoesPage() {
           <TermsSettings
             acceptedDate="14/01/2026"
             onViewDocument={(docId) => console.log("View document:", docId)}
-            onRestartTour={() => console.log("Tour restarted")}
+            onRestartTour={() => resetTour()}
           />
         );
       default:
