@@ -146,17 +146,20 @@ export function TourPopover() {
           ))}
         </div>
 
-        {/* Navigation buttons */}
+        {/* Navigation buttons - sempre mostrar espaço para manter alinhamento */}
         <div className="flex items-center gap-2">
-          {!isFirstStep && (
-            <button
-              onClick={prevStep}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Anterior
-            </button>
-          )}
+          <button
+            onClick={prevStep}
+            disabled={isFirstStep}
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              isFirstStep
+                ? "text-transparent cursor-default"
+                : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
+            }`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Anterior
+          </button>
           <button
             onClick={nextStep}
             className="flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors"

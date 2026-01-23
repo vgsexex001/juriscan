@@ -59,42 +59,40 @@ export function TourOverlay() {
   if (!isTourActive || !spotlightPosition) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] pointer-events-none">
-      {/* SVG overlay com buraco para spotlight */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <mask id="spotlight-mask">
-            {/* Fundo branco = visível */}
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {/* Área preta = transparente (o buraco) */}
-            <rect
-              x={spotlightPosition.left}
-              y={spotlightPosition.top}
-              width={spotlightPosition.width}
-              height={spotlightPosition.height}
-              rx="8"
-              ry="8"
-              fill="black"
-            />
-          </mask>
-        </defs>
-        {/* Overlay escuro com máscara */}
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.5)"
-          mask="url(#spotlight-mask)"
-        />
-      </svg>
+    <>
+      {/* Overlay escuro usando divs em vez de SVG para melhor z-index */}
+      {/* Top overlay */}
+      <div
+        className="fixed left-0 right-0 top-0 bg-black/50 z-[90] pointer-events-none"
+        style={{ height: spotlightPosition.top }}
+      />
+      {/* Bottom overlay */}
+      <div
+        className="fixed left-0 right-0 bottom-0 bg-black/50 z-[90] pointer-events-none"
+        style={{ top: spotlightPosition.top + spotlightPosition.height }}
+      />
+      {/* Left overlay */}
+      <div
+        className="fixed left-0 bg-black/50 z-[90] pointer-events-none"
+        style={{
+          top: spotlightPosition.top,
+          height: spotlightPosition.height,
+          width: spotlightPosition.left,
+        }}
+      />
+      {/* Right overlay */}
+      <div
+        className="fixed right-0 bg-black/50 z-[90] pointer-events-none"
+        style={{
+          top: spotlightPosition.top,
+          height: spotlightPosition.height,
+          left: spotlightPosition.left + spotlightPosition.width,
+        }}
+      />
 
       {/* Borda do spotlight */}
       <div
-        className="absolute rounded-lg border-2 border-primary shadow-lg transition-all duration-300"
+        className="fixed rounded-lg border-2 border-primary shadow-lg transition-all duration-300 z-[91] pointer-events-none"
         style={{
           top: spotlightPosition.top,
           left: spotlightPosition.left,
@@ -102,6 +100,6 @@ export function TourOverlay() {
           height: spotlightPosition.height,
         }}
       />
-    </div>
+    </>
   );
 }
