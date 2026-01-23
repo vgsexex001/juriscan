@@ -170,9 +170,9 @@ export function TourPopover() {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+      <div className="flex flex-col gap-3 p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
         {/* Progress dots */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-center gap-1.5">
           {Array.from({ length: totalSteps }).map((_, index) => (
             <div
               key={index}
@@ -187,14 +187,14 @@ export function TourPopover() {
           ))}
         </div>
 
-        {/* Navigation buttons - sempre mostrar espaço para manter alinhamento */}
-        <div className="flex items-center gap-2">
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={prevStep}
             disabled={isFirstStep}
             className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition-colors ${
               isFirstStep
-                ? "text-transparent cursor-default"
+                ? "text-gray-300 cursor-default"
                 : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
             }`}
           >
@@ -203,7 +203,7 @@ export function TourPopover() {
           </button>
           <button
             onClick={nextStep}
-            className="flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors"
+            className="flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors whitespace-nowrap"
           >
             {isLastStep ? (
               "Concluir"
