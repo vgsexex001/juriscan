@@ -95,17 +95,17 @@ export default function NotificationSettings({
       </h2>
 
       {/* Toggle List */}
-      <div className="flex-1">
+      <div className="flex-1 max-w-2xl">
         {notificationItems.map((item, index) => (
           <div
             key={item.id}
-            className={`flex items-center justify-between py-4 ${
+            className={`flex items-center justify-between py-4 gap-4 ${
               index < notificationItems.length - 1
                 ? "border-b border-gray-100"
                 : ""
             }`}
           >
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-800">{item.title}</p>
               <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
             </div>
@@ -116,7 +116,7 @@ export default function NotificationSettings({
               aria-checked={preferences[item.id]}
               aria-label={`Alternar ${item.title}`}
               onClick={() => handleToggle(item.id)}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+              className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${
                 preferences[item.id] ? "bg-primary" : "bg-gray-300"
               }`}
             >
@@ -131,7 +131,7 @@ export default function NotificationSettings({
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
+      <div className="flex justify-end pt-6 mt-6 border-t border-gray-100 max-w-2xl">
         <button
           onClick={handleSave}
           disabled={isSaving}
