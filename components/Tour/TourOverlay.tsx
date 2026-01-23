@@ -58,46 +58,56 @@ export function TourOverlay() {
 
   if (!isTourActive || !spotlightPosition) return null;
 
+  // Estilo do overlay - escurecimento suave (30% opacity, sem blur)
+  const overlayClass = "fixed bg-black/30 z-[90] pointer-events-none transition-all duration-300";
+
   return (
     <>
-      {/* Overlay escuro usando divs em vez de SVG para melhor z-index */}
+      {/* Overlay escuro suave usando divs separadas */}
       {/* Top overlay */}
       <div
-        className="fixed left-0 right-0 top-0 bg-black/50 z-[90] pointer-events-none"
-        style={{ height: spotlightPosition.top }}
+        className={`${overlayClass} left-0 right-0 top-0`}
+        style={{ height: Math.max(0, spotlightPosition.top) }}
       />
       {/* Bottom overlay */}
       <div
-        className="fixed left-0 right-0 bottom-0 bg-black/50 z-[90] pointer-events-none"
+        className={`${overlayClass} left-0 right-0 bottom-0`}
         style={{ top: spotlightPosition.top + spotlightPosition.height }}
       />
       {/* Left overlay */}
       <div
-        className="fixed left-0 bg-black/50 z-[90] pointer-events-none"
+        className={overlayClass}
         style={{
           top: spotlightPosition.top,
           height: spotlightPosition.height,
-          width: spotlightPosition.left,
+          width: Math.max(0, spotlightPosition.left),
+          left: 0,
         }}
       />
       {/* Right overlay */}
       <div
-        className="fixed right-0 bg-black/50 z-[90] pointer-events-none"
+        className={overlayClass}
         style={{
           top: spotlightPosition.top,
           height: spotlightPosition.height,
           left: spotlightPosition.left + spotlightPosition.width,
+          right: 0,
         }}
       />
 
-      {/* Borda do spotlight */}
+      {/* Highlight elegante do elemento ativo - glow azul suave */}
       <div
-        className="fixed rounded-lg border-2 border-primary shadow-lg transition-all duration-300 z-[91] pointer-events-none"
+        className="fixed rounded-lg z-[91] pointer-events-none transition-all duration-300"
         style={{
           top: spotlightPosition.top,
           left: spotlightPosition.left,
           width: spotlightPosition.width,
           height: spotlightPosition.height,
+          boxShadow: `
+            0 0 0 2px rgba(59, 130, 246, 0.8),
+            0 0 20px 4px rgba(59, 130, 246, 0.3),
+            0 0 40px 8px rgba(59, 130, 246, 0.15)
+          `,
         }}
       />
     </>
