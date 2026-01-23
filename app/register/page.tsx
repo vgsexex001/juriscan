@@ -45,6 +45,10 @@ export default function RegisterPage() {
         setError("E-mail inválido.");
       } else if (result.error.includes("password")) {
         setError("A senha deve ter pelo menos 6 caracteres.");
+      } else if (result.error.toLowerCase().includes("rate limit") || result.error.toLowerCase().includes("email rate limit")) {
+        setError("Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.");
+      } else if (result.error.includes("over_email_send_rate_limit")) {
+        setError("Limite de envio de e-mails atingido. Aguarde alguns minutos antes de tentar novamente.");
       } else {
         setError(result.error);
       }
