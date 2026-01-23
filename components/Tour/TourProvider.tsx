@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { TourContext, TourStep } from "./TourContext";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 const TOUR_STEPS: TourStep[] = [
   {
@@ -87,27 +89,44 @@ interface TourProviderProps {
   children: ReactNode;
 }
 
+// Rotas onde o tour NÃO deve aparecer (páginas de autenticação)
+const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
+
 export function TourProvider({ children }: TourProviderProps) {
+  const pathname = usePathname();
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasCompletedTour, setHasCompletedTour] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Carregar estado do localStorage na inicialização
+  // Verificar autenticação e carregar estado do localStorage
   useEffect(() => {
-    const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
-    const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
+    const checkAuthAndInitialize = async () => {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
 
-    setHasCompletedTour(tourCompleted === "true");
+      const isLoggedIn = !!session?.user;
 
-    // Mostrar welcome modal apenas se nunca foi mostrado
-    if (!welcomeShown) {
-      setIsWelcomeModalOpen(true);
-    }
+      const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
+      const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
 
-    setIsInitialized(true);
-  }, []);
+      setHasCompletedTour(tourCompleted === "true");
+
+      // Mostrar welcome modal apenas se:
+      // 1. Nunca foi mostrado
+      // 2. Usuário está logado
+      // 3. Não está em uma rota de autenticação
+      const isAuthRoute = AUTH_ROUTES.includes(pathname);
+      if (!welcomeShown && isLoggedIn && !isAuthRoute) {
+        setIsWelcomeModalOpen(true);
+      }
+
+      setIsInitialized(true);
+    };
+
+    checkAuthAndInitialize();
+  }, [pathname]);
 
   const openWelcomeModal = useCallback(() => {
     setIsWelcomeModalOpen(true);
