@@ -9,6 +9,44 @@ interface PopoverPosition {
   left: number;
 }
 
+// Componente da seta
+function Arrow({ placement }: { placement: string }) {
+  const baseClass = "absolute w-3 h-3 bg-white transform rotate-45";
+
+  switch (placement) {
+    case "right":
+      return (
+        <div
+          className={`${baseClass} -left-1.5 top-1/2 -translate-y-1/2`}
+          style={{ boxShadow: "-2px 2px 4px rgba(0, 0, 0, 0.1)" }}
+        />
+      );
+    case "left":
+      return (
+        <div
+          className={`${baseClass} -right-1.5 top-1/2 -translate-y-1/2`}
+          style={{ boxShadow: "2px -2px 4px rgba(0, 0, 0, 0.1)" }}
+        />
+      );
+    case "top":
+      return (
+        <div
+          className={`${baseClass} -bottom-1.5 left-1/2 -translate-x-1/2`}
+          style={{ boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.1)" }}
+        />
+      );
+    case "bottom":
+      return (
+        <div
+          className={`${baseClass} -top-1.5 left-1/2 -translate-x-1/2`}
+          style={{ boxShadow: "-2px -2px 4px rgba(0, 0, 0, 0.1)" }}
+        />
+      );
+    default:
+      return null;
+  }
+}
+
 export function TourPopover() {
   const {
     isTourActive,
@@ -109,6 +147,9 @@ export function TourPopover() {
         left: position.left,
       }}
     >
+      {/* Seta apontando para o elemento */}
+      <Arrow placement={currentStep.placement} />
+
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-900">{currentStep.title}</h3>

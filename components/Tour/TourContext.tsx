@@ -13,14 +13,11 @@ export interface TourStep {
 
 export interface TourContextType {
   // Estado
-  isWelcomeModalOpen: boolean;
   isTourActive: boolean;
   currentStepIndex: number;
   hasCompletedTour: boolean;
 
   // Ações
-  openWelcomeModal: () => void;
-  closeWelcomeModal: () => void;
   startTour: () => void;
   endTour: () => void;
   nextStep: () => void;

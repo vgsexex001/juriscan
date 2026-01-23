@@ -82,7 +82,6 @@ const TOUR_STEPS: TourStep[] = [
 
 const STORAGE_KEYS = {
   tourCompleted: "juriscan_tour_completed",
-  welcomeShown: "juriscan_welcome_shown",
 };
 
 interface TourProviderProps {
@@ -94,26 +93,25 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 
 export function TourProvider({ children }: TourProviderProps) {
   const pathname = usePathname();
-  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasCompletedTour, setHasCompletedTour] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Função para verificar se deve mostrar o tour
-  const checkAndShowTour = useCallback((isLoggedIn: boolean) => {
+  // Função para verificar se deve iniciar o tour
+  const checkAndStartTour = useCallback((isLoggedIn: boolean) => {
     const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
-    const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
 
     setHasCompletedTour(tourCompleted === "true");
 
-    // Mostrar welcome modal apenas se:
-    // 1. Nunca foi mostrado
+    // Iniciar tour diretamente se:
+    // 1. Tour nunca foi completado
     // 2. Usuário está logado
     // 3. Não está em uma rota de autenticação
     const isAuthRoute = AUTH_ROUTES.includes(pathname);
-    if (!welcomeShown && isLoggedIn && !isAuthRoute) {
-      setIsWelcomeModalOpen(true);
+    if (!tourCompleted && isLoggedIn && !isAuthRoute) {
+      setCurrentStepIndex(0);
+      setIsTourActive(true);
     }
 
     setIsInitialized(true);
@@ -126,7 +124,7 @@ export function TourProvider({ children }: TourProviderProps) {
     // Verificar sessão inicial
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      checkAndShowTour(!!session?.user);
+      checkAndStartTour(!!session?.user);
     };
 
     checkInitialSession();
@@ -134,15 +132,16 @@ export function TourProvider({ children }: TourProviderProps) {
     // Escutar mudanças de autenticação (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Quando usuário faz login, verificar se deve mostrar tour
+        // Quando usuário faz login, iniciar tour diretamente
         if (event === "SIGNED_IN" && session?.user) {
-          const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
+          const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
           const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
-          if (!welcomeShown && !isAuthRoute) {
+          if (!tourCompleted && !isAuthRoute) {
             // Pequeno delay para garantir que a navegação completou
             setTimeout(() => {
-              setIsWelcomeModalOpen(true);
+              setCurrentStepIndex(0);
+              setIsTourActive(true);
             }, 500);
           }
         }
@@ -152,20 +151,9 @@ export function TourProvider({ children }: TourProviderProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [pathname, checkAndShowTour]);
-
-  const openWelcomeModal = useCallback(() => {
-    setIsWelcomeModalOpen(true);
-  }, []);
-
-  const closeWelcomeModal = useCallback(() => {
-    setIsWelcomeModalOpen(false);
-    localStorage.setItem(STORAGE_KEYS.welcomeShown, "true");
-  }, []);
+  }, [pathname, checkAndStartTour]);
 
   const startTour = useCallback(() => {
-    setIsWelcomeModalOpen(false);
-    localStorage.setItem(STORAGE_KEYS.welcomeShown, "true");
     setCurrentStepIndex(0);
     setIsTourActive(true);
   }, []);
@@ -202,10 +190,9 @@ export function TourProvider({ children }: TourProviderProps) {
 
   const resetTour = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.tourCompleted);
-    localStorage.removeItem(STORAGE_KEYS.welcomeShown);
     setHasCompletedTour(false);
     setCurrentStepIndex(0);
-    setIsWelcomeModalOpen(true);
+    setIsTourActive(true);
   }, []);
 
   const currentStep = isTourActive ? TOUR_STEPS[currentStepIndex] : null;
@@ -221,12 +208,9 @@ export function TourProvider({ children }: TourProviderProps) {
   return (
     <TourContext.Provider
       value={{
-        isWelcomeModalOpen,
         isTourActive,
         currentStepIndex,
         hasCompletedTour,
-        openWelcomeModal,
-        closeWelcomeModal,
         startTour,
         endTour,
         nextStep,

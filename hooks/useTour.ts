@@ -5,12 +5,9 @@ import { TourContext, TourContextType } from "@/components/Tour/TourContext";
 
 // Valores padrão para quando o context não está disponível (SSR)
 const defaultTourContext: TourContextType = {
-  isWelcomeModalOpen: false,
   isTourActive: false,
   currentStepIndex: 0,
   hasCompletedTour: true,
-  openWelcomeModal: () => {},
-  closeWelcomeModal: () => {},
   startTour: () => {},
   endTour: () => {},
   nextStep: () => {},
