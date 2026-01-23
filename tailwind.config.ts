@@ -9,8 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primary: "#1C398E",
+        "primary-hover": "#162456",
+        link: "#155DFC",
+        "text-dark": "#101828",
+        "text-gray": "#4A5565",
+        "text-label": "#364153",
+        "text-input": "#0A0A0A",
+        "text-muted": "#6A7282",
+        border: "#D1D5DC",
+        "feature-blue": "#51A2FF",
+        "light-blue": "#DBEAFE",
+      },
+      fontFamily: {
+        inter: ["Inter", "sans-serif"],
+      },
+      borderRadius: {
+        input: "10px",
+        button: "10px",
       },
     },
   },

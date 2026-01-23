@@ -1,0 +1,224 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Scale,
+  Info,
+  TrendingUp,
+  AlertTriangle,
+  FileCheck,
+  UserCheck,
+  Check,
+} from "lucide-react";
+
+interface WelcomeModalProps {
+  onAccept: () => void;
+}
+
+const infoItems = [
+  {
+    icon: TrendingUp,
+    iconColor: "#8B5CF6",
+    title: "Natureza das Análises Preditivas",
+    description: (
+      <>
+        As análises apresentadas pela Juriscan são baseadas em{" "}
+        <strong className="text-gray-800">padrões históricos</strong> de decisões
+        judiciais. Os resultados representam{" "}
+        <strong className="text-gray-800">probabilidades e cenários estimados</strong>,
+        calculados a partir de bancos de dados jurisprudenciais.
+      </>
+    ),
+  },
+  {
+    icon: AlertTriangle,
+    iconColor: "#F59E0B",
+    title: "Limitações e Responsabilidade",
+    description: (
+      <>
+        As análises{" "}
+        <strong className="text-gray-800">não constituem garantia de êxito</strong>,
+        aconselhamento jurídico definitivo ou previsão absoluta de resultado. Cada
+        caso possui particularidades fáticas, probatórias e jurídicas que podem
+        influenciar significativamente o desfecho processual.
+      </>
+    ),
+  },
+  {
+    icon: FileCheck,
+    iconColor: "#10B981",
+    title: "Ferramenta de Apoio à Decisão",
+    description: (
+      <>
+        A Juriscan é uma{" "}
+        <strong className="text-gray-800">ferramenta de apoio à decisão estratégica</strong>,
+        desenvolvida para auxiliar advogados na análise de cenários e tendências. A
+        análise jurídica completa, a estratégia processual e as decisões finais são
+        de{" "}
+        <strong className="text-gray-800">
+          responsabilidade exclusiva do advogado responsável
+        </strong>{" "}
+        pelo caso.
+      </>
+    ),
+  },
+  {
+    icon: UserCheck,
+    iconColor: "#3B82F6",
+    title: "Uso Profissional Responsável",
+    description: (
+      <>
+        Recomendamos que os dados e análises sejam utilizados como{" "}
+        <strong className="text-gray-800">insumo complementar</strong> ao
+        conhecimento jurídico, experiência profissional e análise detalhada das
+        especificidades de cada caso concreto.
+      </>
+    ),
+  },
+];
+
+export default function WelcomeModal({ onAccept }: WelcomeModalProps) {
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleAccept = () => {
+    if (isTermsAccepted) {
+      localStorage.setItem("termsAccepted", "true");
+      onAccept();
+    }
+  };
+
+  if (!mounted) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+      {/* Modal */}
+      <div
+        className="relative w-[600px] max-w-[90vw] max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+        role="dialog"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+      >
+        {/* Header */}
+        <div
+          className="p-6 flex items-center gap-4"
+          style={{
+            background: "linear-gradient(135deg, #1C398E 0%, #193CB8 100%)",
+          }}
+        >
+          <div className="p-3 bg-white/20 rounded-xl">
+            <Scale className="w-12 h-12 text-white" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h2
+              id="modal-title"
+              className="text-white text-2xl font-semibold"
+            >
+              Bem-vindo à Juriscan
+            </h2>
+            <p className="text-light-blue text-sm mt-1">
+              Plataforma de Jurimetria e Análise Estratégica
+            </p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div
+          id="modal-description"
+          className="p-6 overflow-y-auto flex-1"
+          style={{ maxHeight: "calc(90vh - 300px)" }}
+        >
+          {/* Alert Box */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Info className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+              <div>
+                <h3 className="text-gray-800 font-semibold">
+                  Informação Importante sobre as Análises
+                </h3>
+                <p className="text-gray-500 text-sm mt-1">
+                  Antes de utilizar a plataforma, é fundamental compreender a
+                  natureza e as limitações das análises fornecidas.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Info Items */}
+          <div className="space-y-5">
+            {infoItems.map((item, index) => (
+              <div key={index} className="flex items-start gap-3">
+                <div
+                  className="p-2 rounded-lg flex-shrink-0"
+                  style={{ backgroundColor: `${item.iconColor}15` }}
+                >
+                  <item.icon
+                    className="w-5 h-5"
+                    style={{ color: item.iconColor }}
+                  />
+                </div>
+                <div>
+                  <h4 className="text-gray-800 font-semibold text-sm">
+                    {item.title}
+                  </h4>
+                  <p className="text-gray-600 text-sm mt-1 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          {/* Checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isTermsAccepted}
+              onChange={(e) => setIsTermsAccepted(e.target.checked)}
+              className="w-5 h-5 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
+              aria-required="true"
+            />
+            <span className="text-gray-600 text-sm leading-5">
+              Li e compreendi que as análises representam probabilidades
+              estatísticas e não garantias de resultado. Estou ciente de que as
+              decisões estratégicas e jurídicas são de minha responsabilidade
+              profissional.
+            </span>
+          </label>
+
+          {/* Submit Button */}
+          <button
+            onClick={handleAccept}
+            disabled={!isTermsAccepted}
+            className={`w-full h-12 mt-4 rounded-button flex items-center justify-center gap-2 text-white font-medium transition-colors ${
+              isTermsAccepted
+                ? "bg-primary hover:bg-primary-hover"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <Check className="w-5 h-5" />
+            <span>Aceitar termos</span>
+          </button>
+
+          {/* Disclaimer */}
+          <p className="text-gray-400 text-xs text-center mt-4">
+            Esta mensagem será exibida apenas uma vez. Você pode revisar estas
+            informações a qualquer momento nas Configurações.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
