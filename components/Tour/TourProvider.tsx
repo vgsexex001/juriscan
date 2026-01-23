@@ -100,33 +100,59 @@ export function TourProvider({ children }: TourProviderProps) {
   const [hasCompletedTour, setHasCompletedTour] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Verificar autenticação e carregar estado do localStorage
+  // Função para verificar se deve mostrar o tour
+  const checkAndShowTour = useCallback((isLoggedIn: boolean) => {
+    const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
+    const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
+
+    setHasCompletedTour(tourCompleted === "true");
+
+    // Mostrar welcome modal apenas se:
+    // 1. Nunca foi mostrado
+    // 2. Usuário está logado
+    // 3. Não está em uma rota de autenticação
+    const isAuthRoute = AUTH_ROUTES.includes(pathname);
+    if (!welcomeShown && isLoggedIn && !isAuthRoute) {
+      setIsWelcomeModalOpen(true);
+    }
+
+    setIsInitialized(true);
+  }, [pathname]);
+
+  // Verificar autenticação inicial e escutar mudanças
   useEffect(() => {
-    const checkAuthAndInitialize = async () => {
-      const supabase = getSupabaseClient();
+    const supabase = getSupabaseClient();
+
+    // Verificar sessão inicial
+    const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-
-      const isLoggedIn = !!session?.user;
-
-      const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
-      const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
-
-      setHasCompletedTour(tourCompleted === "true");
-
-      // Mostrar welcome modal apenas se:
-      // 1. Nunca foi mostrado
-      // 2. Usuário está logado
-      // 3. Não está em uma rota de autenticação
-      const isAuthRoute = AUTH_ROUTES.includes(pathname);
-      if (!welcomeShown && isLoggedIn && !isAuthRoute) {
-        setIsWelcomeModalOpen(true);
-      }
-
-      setIsInitialized(true);
+      checkAndShowTour(!!session?.user);
     };
 
-    checkAuthAndInitialize();
-  }, [pathname]);
+    checkInitialSession();
+
+    // Escutar mudanças de autenticação (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        // Quando usuário faz login, verificar se deve mostrar tour
+        if (event === "SIGNED_IN" && session?.user) {
+          const welcomeShown = localStorage.getItem(STORAGE_KEYS.welcomeShown);
+          const isAuthRoute = AUTH_ROUTES.includes(pathname);
+
+          if (!welcomeShown && !isAuthRoute) {
+            // Pequeno delay para garantir que a navegação completou
+            setTimeout(() => {
+              setIsWelcomeModalOpen(true);
+            }, 500);
+          }
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [pathname, checkAndShowTour]);
 
   const openWelcomeModal = useCallback(() => {
     setIsWelcomeModalOpen(true);
