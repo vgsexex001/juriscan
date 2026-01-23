@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { openai, AI_CONFIG, LEGAL_SYSTEM_PROMPT, CREDIT_COSTS } from "@/lib/ai/config";
+import { getOpenAI, AI_CONFIG, LEGAL_SYSTEM_PROMPT, CREDIT_COSTS } from "@/lib/ai/config";
 
 interface CreditBalance {
   balance: number;
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         try {
           // Call OpenAI with streaming
-          const response = await openai.chat.completions.create({
+          const response = await getOpenAI().chat.completions.create({
             model: AI_CONFIG.model,
             max_tokens: AI_CONFIG.maxTokens,
             temperature: AI_CONFIG.temperature,
