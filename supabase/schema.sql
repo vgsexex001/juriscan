@@ -428,5 +428,97 @@ CREATE POLICY "Anyone can view active plans"
   USING (is_active = TRUE);
 
 -- ===========================================
+-- TABELA: processed_webhook_events (idempotency para Stripe webhooks)
+-- ===========================================
+
+CREATE TABLE public.processed_webhook_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  stripe_event_id TEXT UNIQUE NOT NULL,
+  event_type TEXT NOT NULL,
+  processed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_processed_webhook_events_stripe_id ON public.processed_webhook_events(stripe_event_id);
+
+-- Limpar eventos antigos (mais de 7 dias) - pode ser executado via cron
+-- DELETE FROM public.processed_webhook_events WHERE processed_at < NOW() - INTERVAL '7 days';
+
+-- ===========================================
+-- FUNÇÃO RPC: deduct_credits (dedução atômica de créditos)
+-- ===========================================
+
+CREATE OR REPLACE FUNCTION public.deduct_credits(
+  p_user_id UUID,
+  p_amount INTEGER
+) RETURNS BOOLEAN AS $$
+DECLARE
+  v_balance INTEGER;
+BEGIN
+  -- Lock the row and get current balance
+  SELECT balance INTO v_balance
+  FROM public.credit_balances
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+
+  -- Check if user has enough credits
+  IF v_balance IS NULL OR v_balance < p_amount THEN
+    RETURN FALSE;
+  END IF;
+
+  -- Deduct credits atomically
+  UPDATE public.credit_balances
+  SET balance = balance - p_amount,
+      updated_at = NOW()
+  WHERE user_id = p_user_id;
+
+  -- Record the transaction
+  INSERT INTO public.credit_transactions (user_id, type, amount, balance, description)
+  VALUES (
+    p_user_id,
+    'ANALYSIS_DEBIT',
+    -p_amount,
+    v_balance - p_amount,
+    'Mensagem de chat'
+  );
+
+  RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ===========================================
+-- FUNÇÃO RPC: add_credits (adição atômica de créditos)
+-- ===========================================
+
+CREATE OR REPLACE FUNCTION public.add_credits(
+  p_user_id UUID,
+  p_amount INTEGER,
+  p_description TEXT DEFAULT 'Créditos adicionados'
+) RETURNS INTEGER AS $$
+DECLARE
+  v_new_balance INTEGER;
+BEGIN
+  -- Upsert balance
+  INSERT INTO public.credit_balances (user_id, balance, updated_at)
+  VALUES (p_user_id, p_amount, NOW())
+  ON CONFLICT (user_id) DO UPDATE
+  SET balance = credit_balances.balance + p_amount,
+      updated_at = NOW()
+  RETURNING balance INTO v_new_balance;
+
+  -- Record the transaction
+  INSERT INTO public.credit_transactions (user_id, type, amount, balance, description)
+  VALUES (
+    p_user_id,
+    'CREDIT_PURCHASE',
+    p_amount,
+    v_new_balance,
+    p_description
+  );
+
+  RETURN v_new_balance;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ===========================================
 -- FIM DO SCHEMA
 -- ===========================================

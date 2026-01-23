@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOpenAI, AI_CONFIG, LEGAL_SYSTEM_PROMPT, CREDIT_COSTS } from "@/lib/ai/config";
-
-interface CreditBalance {
-  balance: number;
-}
+import { chatMessageSchema, validateBody } from "@/lib/validation/schemas";
+import { deductCredits } from "@/services/credit.service";
+import { dbInsertAndSelect, dbInsert, dbUpdateQuery } from "@/lib/supabase/db";
 
 // POST /api/chat - Send message and get AI response with streaming
 export async function POST(request: NextRequest) {
@@ -21,29 +20,28 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const body = await request.json();
-    const { conversationId, message } = body;
-
-    if (!message || !message.trim()) {
-      return new Response(JSON.stringify({ error: "Mensagem vazia" }), {
+    // Validate request body
+    const validation = await validateBody(request, chatMessageSchema);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: validation.error }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Check credit balance
-    const { data: balanceData } = await supabase
-      .from("credit_balances")
-      .select("balance")
-      .eq("user_id", user.id)
-      .single();
+    const { conversationId, message } = validation.data;
 
-    const balance = balanceData as CreditBalance | null;
-    const currentBalance = balance?.balance || 0;
+    // Deduct credits with optimistic locking to prevent race conditions
+    const creditResult = await deductCredits(
+      supabase,
+      user.id,
+      CREDIT_COSTS.chat_message,
+      "Mensagem de chat"
+    );
 
-    if (currentBalance < CREDIT_COSTS.chat_message) {
+    if (!creditResult.success) {
       return new Response(
-        JSON.stringify({ error: "Créditos insuficientes" }),
+        JSON.stringify({ error: creditResult.error || "Créditos insuficientes" }),
         {
           status: 402,
           headers: { "Content-Type": "application/json" },
@@ -56,17 +54,17 @@ export async function POST(request: NextRequest) {
 
     if (!conversationId) {
       // Create new conversation
-      const { data: newConv, error: convError } = await supabase
-        .from("conversations")
-        .insert({
+      const { data: newConv, error: convError } = await dbInsertAndSelect(
+        supabase,
+        "conversations",
+        {
           user_id: user.id,
           title: message.substring(0, 50) + (message.length > 50 ? "..." : ""),
           status: "ACTIVE",
-        } as never)
-        .select()
-        .single();
+        }
+      );
 
-      if (convError) {
+      if (convError || !newConv) {
         return new Response(
           JSON.stringify({ error: "Erro ao criar conversa" }),
           {
@@ -80,17 +78,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Save user message
-    await supabase.from("messages").insert({
+    await dbInsert(supabase, "messages", {
       conversation_id: actualConversationId,
       role: "USER",
       content: message,
-    } as never);
+    });
 
     // Get conversation history for context
     const { data: historyData } = await supabase
       .from("messages")
       .select("role, content")
-      .eq("conversation_id", actualConversationId)
+      .eq("conversation_id", actualConversationId!)
       .order("created_at", { ascending: true })
       .limit(20);
 
@@ -137,34 +135,16 @@ export async function POST(request: NextRequest) {
           }
 
           // Save assistant message to database
-          await supabase.from("messages").insert({
+          await dbInsert(supabase, "messages", {
             conversation_id: actualConversationId,
             role: "ASSISTANT",
             content: fullResponse,
-          } as never);
+          });
 
           // Update conversation timestamp
-          await supabase
-            .from("conversations")
-            .update({ updated_at: new Date().toISOString() } as never)
-            .eq("id", actualConversationId);
-
-          // Deduct credits
-          await supabase
-            .from("credit_balances")
-            .update({
-              balance: currentBalance - CREDIT_COSTS.chat_message,
-              updated_at: new Date().toISOString(),
-            } as never)
-            .eq("user_id", user.id);
-
-          // Record credit transaction
-          await supabase.from("credit_transactions").insert({
-            user_id: user.id,
-            amount: -CREDIT_COSTS.chat_message,
-            type: "usage",
-            description: "Mensagem de chat",
-          } as never);
+          await dbUpdateQuery(supabase, "conversations", {
+            updated_at: new Date().toISOString(),
+          }).eq("id", actualConversationId!);
 
           // Send done message
           const doneChunk = JSON.stringify({

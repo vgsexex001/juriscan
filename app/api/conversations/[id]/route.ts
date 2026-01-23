@@ -1,22 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-interface Conversation {
-  id: string;
-  user_id: string;
-  title: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Message {
-  id: string;
-  conversation_id: string;
-  role: string;
-  content: string;
-  created_at: string;
-}
+import { updateConversationSchema, validateBody, validateUuid } from "@/lib/validation/schemas";
 
 // GET /api/conversations/[id] - Get conversation with messages
 export async function GET(
@@ -25,6 +9,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // Validate UUID
+    const uuidValidation = validateUuid(id);
+    if (!uuidValidation.success) {
+      return NextResponse.json({ error: uuidValidation.error }, { status: 400 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -49,8 +40,6 @@ export async function GET(
       );
     }
 
-    const conversation = conversationData as Conversation;
-
     // Get messages
     const { data: messagesData } = await supabase
       .from("messages")
@@ -58,11 +47,11 @@ export async function GET(
       .eq("conversation_id", id)
       .order("created_at", { ascending: true });
 
-    const messages = (messagesData || []) as Message[];
-
-    return NextResponse.json({ conversation, messages });
-  } catch (error) {
-    console.error("Get conversation error:", error);
+    return NextResponse.json({
+      conversation: conversationData,
+      messages: messagesData || [],
+    });
+  } catch {
     return NextResponse.json(
       { error: "Erro ao buscar conversa" },
       { status: 500 }
@@ -77,6 +66,13 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+
+    // Validate UUID
+    const uuidValidation = validateUuid(id);
+    if (!uuidValidation.success) {
+      return NextResponse.json({ error: uuidValidation.error }, { status: 400 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -86,8 +82,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { title, status } = body;
+    // Validate request body
+    const validation = await validateBody(request, updateConversationSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { title, status } = validation.data;
 
     const updateData: Record<string, string> = {
       updated_at: new Date().toISOString(),
@@ -111,11 +112,8 @@ export async function PATCH(
       );
     }
 
-    const conversation = data as Conversation;
-
-    return NextResponse.json({ conversation });
-  } catch (error) {
-    console.error("Update conversation error:", error);
+    return NextResponse.json({ conversation: data });
+  } catch {
     return NextResponse.json(
       { error: "Erro ao atualizar conversa" },
       { status: 500 }
@@ -130,6 +128,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    // Validate UUID
+    const uuidValidation = validateUuid(id);
+    if (!uuidValidation.success) {
+      return NextResponse.json({ error: uuidValidation.error }, { status: 400 });
+    }
+
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
@@ -153,8 +158,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Delete conversation error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Erro ao deletar conversa" },
       { status: 500 }

@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { getStripe, PLANS } from "@/lib/stripe/config";
 import { createAdminClient } from "@/lib/supabase/server";
+import { addCredits } from "@/services/credit.service";
 import Stripe from "stripe";
-
-interface CreditBalance {
-  balance: number;
-}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -33,6 +30,24 @@ export async function POST(request: NextRequest) {
   const supabase = await createAdminClient();
 
   try {
+    // Idempotency check: skip if event already processed
+    const { data: existingEvent } = await supabase
+      .from("processed_webhook_events")
+      .select("id")
+      .eq("stripe_event_id", event.id)
+      .single();
+
+    if (existingEvent) {
+      return NextResponse.json({ received: true, skipped: true });
+    }
+
+    // Record event as processed before handling (prevents duplicates)
+    await supabase.from("processed_webhook_events").insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      processed_at: new Date().toISOString(),
+    } as never);
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -85,37 +100,11 @@ async function handleCheckoutCompleted(
 
   // Handle one-time credit purchase
   if (session.mode === "payment") {
-    const creditPackageId = session.metadata?.credit_package_id;
     const credits = session.metadata?.credits;
 
-    if (creditPackageId && credits) {
+    if (credits) {
       const creditsToAdd = parseInt(credits);
-
-      // Get current balance
-      const { data: balanceData } = await supabase
-        .from("credit_balances")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
-
-      const balance = balanceData as CreditBalance | null;
-      const currentBalance = balance?.balance || 0;
-
-      // Update or insert balance
-      await supabase.from("credit_balances").upsert({
-        user_id: userId,
-        balance: currentBalance + creditsToAdd,
-        updated_at: new Date().toISOString(),
-      } as never);
-
-      // Record transaction
-      await supabase.from("credit_transactions").insert({
-        user_id: userId,
-        amount: creditsToAdd,
-        type: "purchase",
-        description: `Compra de ${creditsToAdd} créditos`,
-        stripe_payment_id: session.payment_intent as string,
-      } as never);
+      await addCredits(supabase, userId, creditsToAdd, `Compra de ${creditsToAdd} créditos`);
     }
   }
 }
@@ -159,28 +148,7 @@ async function handleSubscriptionChange(
 
   // Add monthly credits if subscription is active and plan exists
   if (subscription.status === "active" && plan) {
-    const { data: balanceData } = await supabase
-      .from("credit_balances")
-      .select("balance")
-      .eq("user_id", userId)
-      .single();
-
-    const balance = balanceData as CreditBalance | null;
-    const currentBalance = balance?.balance || 0;
-
-    await supabase.from("credit_balances").upsert({
-      user_id: userId,
-      balance: currentBalance + plan.credits,
-      updated_at: new Date().toISOString(),
-    } as never);
-
-    await supabase.from("credit_transactions").insert({
-      user_id: userId,
-      amount: plan.credits,
-      type: "subscription",
-      description: `Créditos mensais - Plano ${plan.name}`,
-      stripe_subscription_id: subscription.id,
-    } as never);
+    await addCredits(supabase, userId, plan.credits, `Créditos mensais - Plano ${plan.name}`);
   }
 }
 
@@ -210,18 +178,16 @@ async function handleSubscriptionCanceled(
     .eq("id", userId);
 }
 
-async function handleInvoicePaid(
-  supabase: Awaited<ReturnType<typeof createAdminClient>>,
-  invoice: Stripe.Invoice
-) {
-  // Log successful payment
-  console.log("Invoice paid:", invoice.id);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleInvoicePaid(supabase: Awaited<ReturnType<typeof createAdminClient>>, invoice: Stripe.Invoice) {
+  // TODO: Send confirmation email to user
+  void supabase;
+  void invoice;
 }
 
-async function handleInvoiceFailed(
-  supabase: Awaited<ReturnType<typeof createAdminClient>>,
-  invoice: Stripe.Invoice
-) {
-  // Could send notification to user about failed payment
-  console.log("Invoice failed:", invoice.id);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleInvoiceFailed(supabase: Awaited<ReturnType<typeof createAdminClient>>, invoice: Stripe.Invoice) {
+  // TODO: Send notification to user about failed payment
+  void supabase;
+  void invoice;
 }

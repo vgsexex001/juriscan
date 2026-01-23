@@ -177,6 +177,13 @@ export interface NotificationPreference {
   updated_at: string;
 }
 
+export interface ProcessedWebhookEvent {
+  id: string;
+  stripe_event_id: string;
+  event_type: string;
+  processed_at: string;
+}
+
 // Database type for Supabase client
 export interface Database {
   public: {
@@ -185,62 +192,84 @@ export interface Database {
         Row: Profile;
         Insert: Omit<Profile, "created_at" | "updated_at">;
         Update: Partial<Omit<Profile, "id" | "created_at">>;
+        Relationships: [];
       };
       users: {
         Row: User;
         Insert: Omit<User, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<User, "id" | "created_at">>;
+        Relationships: [];
       };
       sessions: {
         Row: Session;
         Insert: Omit<Session, "id" | "created_at">;
         Update: Partial<Omit<Session, "id" | "created_at">>;
+        Relationships: [];
       };
       plans: {
         Row: Plan;
         Insert: Omit<Plan, "id" | "created_at">;
         Update: Partial<Omit<Plan, "id" | "created_at">>;
+        Relationships: [];
       };
       subscriptions: {
         Row: Subscription;
         Insert: Omit<Subscription, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<Subscription, "id" | "created_at">>;
+        Relationships: [];
       };
       credit_balances: {
         Row: CreditBalance;
         Insert: Omit<CreditBalance, "id">;
         Update: Partial<Omit<CreditBalance, "id">>;
+        Relationships: [];
       };
       credit_transactions: {
         Row: CreditTransaction;
         Insert: Omit<CreditTransaction, "id" | "created_at">;
         Update: never;
+        Relationships: [];
       };
       analyses: {
         Row: Analysis;
         Insert: Omit<Analysis, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<Analysis, "id" | "created_at">>;
+        Relationships: [];
       };
       conversations: {
         Row: Conversation;
         Insert: Omit<Conversation, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<Conversation, "id" | "created_at">>;
+        Relationships: [];
       };
       messages: {
         Row: Message;
         Insert: Omit<Message, "id" | "created_at">;
         Update: never;
+        Relationships: [];
       };
       reports: {
         Row: Report;
         Insert: Omit<Report, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<Report, "id" | "created_at">>;
+        Relationships: [];
       };
       notification_preferences: {
         Row: NotificationPreference;
         Insert: Omit<NotificationPreference, "id">;
         Update: Partial<Omit<NotificationPreference, "id">>;
+        Relationships: [];
+      };
+      processed_webhook_events: {
+        Row: ProcessedWebhookEvent;
+        Insert: Omit<ProcessedWebhookEvent, "id">;
+        Update: never;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
