@@ -17,11 +17,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
 
 const navItems = [
-  { id: "chat-juridico", icon: MessageSquare, label: "Chat Jurídico", href: "/chat" },
-  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { id: "historico", icon: History, label: "Histórico", href: "/historico" },
-  { id: "relatorios", icon: FileText, label: "Relatórios", href: "/relatorios" },
-  { id: "configuracoes", icon: Settings, label: "Configurações", href: "/configuracoes" },
+  { id: "chat-juridico", icon: MessageSquare, label: "Chat Jurídico", href: "/chat", tourId: "menu-chat" },
+  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", tourId: "menu-dashboard" },
+  { id: "historico", icon: History, label: "Histórico", href: "/historico", tourId: "menu-historico" },
+  { id: "relatorios", icon: FileText, label: "Relatórios", href: "/relatorios", tourId: "menu-relatorios" },
+  { id: "configuracoes", icon: Settings, label: "Configurações", href: "/configuracoes", tourId: "menu-configuracoes" },
 ];
 
 interface SidebarProps {
@@ -59,7 +59,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-primary flex flex-col z-10">
+    <aside data-tour="sidebar" className="fixed left-0 top-0 h-screen w-60 bg-primary flex flex-col z-10">
       {/* Logo */}
       <div className="flex items-center gap-2 p-4">
         <Scale className="w-6 h-6 text-white" strokeWidth={1.5} />
@@ -69,6 +69,7 @@ export default function Sidebar({
       {/* Credits Card */}
       <div
         id="credits-card"
+        data-tour="credits"
         className={`mx-4 p-3 bg-white/15 rounded-lg transition-shadow ${
           highlightCredits ? "ring-[3px] ring-blue-500/50 z-50 relative" : ""
         }`}
@@ -103,6 +104,7 @@ export default function Sidebar({
               key={item.href}
               href={item.href}
               id={`menu-item-${item.id}`}
+              data-tour={item.tourId}
               className={`flex items-center gap-3 mx-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? "bg-white/15 text-white"

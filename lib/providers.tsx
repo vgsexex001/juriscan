@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState, type ReactNode } from "react";
+import { TourProvider } from "@/components/Tour";
+import { Tour } from "@/components/Tour";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -29,7 +31,10 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <TourProvider>
+        {children}
+        <Tour />
+      </TourProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
