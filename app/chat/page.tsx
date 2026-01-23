@@ -17,6 +17,7 @@ import {
 import Sidebar from "@/components/Sidebar";
 import ChatMessage from "@/components/ChatMessage";
 import SuggestionCards from "@/components/SuggestionCards";
+import LegalDisclaimerInline from "@/components/LegalDisclaimerInline";
 import { useConversations, useConversation } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { useCredits } from "@/hooks/useCredits";
@@ -383,11 +384,8 @@ function ChatContent() {
               </button>
             </div>
 
-            {/* Disclaimer */}
-            <p className="text-xs text-gray-400 text-center mt-2">
-              A nossa assistente fornece análises preditivas baseadas em jurimetria.
-              Sempre consulte um advogado para decisões finais.
-            </p>
+            {/* Legal Disclaimer */}
+            <LegalDisclaimerInline />
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ import PriorityActions from "@/components/PriorityActions";
 import TribunalChart from "@/components/TribunalChart";
 import QuickActions from "@/components/QuickActions";
 import AnalysesTable from "@/components/AnalysesTable";
+import LegalDisclaimer from "@/components/LegalDisclaimer";
 
 // Data for metrics cards
 const metricsData = [
@@ -222,6 +223,9 @@ export default function DashboardPage() {
 
           {/* Recent Analyses Table */}
           <AnalysesTable analyses={analysesData} />
+
+          {/* Legal Disclaimer */}
+          <LegalDisclaimer />
         </main>
       </div>
     </div>

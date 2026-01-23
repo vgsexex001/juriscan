@@ -15,6 +15,7 @@ import Sidebar from "@/components/Sidebar";
 import HistoricoMetricCard from "@/components/HistoricoMetricCard";
 import ReportCard from "@/components/ReportCard";
 import TemplateCard from "@/components/TemplateCard";
+import LegalDisclaimer from "@/components/LegalDisclaimer";
 
 // Metrics data
 const metricsData = [
@@ -322,6 +323,9 @@ export default function RelatoriosPage() {
               ))}
             </div>
           </div>
+
+          {/* Legal Disclaimer */}
+          <LegalDisclaimer />
         </main>
       </div>
     </div>
