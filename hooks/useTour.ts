@@ -7,7 +7,7 @@ import { TourContext, TourContextType } from "@/components/Tour/TourContext";
 const defaultTourContext: TourContextType = {
   isTourActive: false,
   currentStepIndex: 0,
-  hasCompletedTour: true,
+  hasCompletedTour: false,
   startTour: () => {},
   endTour: () => {},
   nextStep: () => {},
