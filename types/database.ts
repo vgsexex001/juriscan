@@ -28,7 +28,8 @@ export interface User {
 
 export interface Profile {
   id: string;
-  name: string | null;
+  email: string;
+  name: string;
   oab: string | null;
   phone: string | null;
   avatar_url: string | null;
@@ -36,14 +37,14 @@ export interface Profile {
   practice_areas: string[];
   role: UserRole;
   status: UserStatus;
-  current_plan: string;
-  stripe_customer_id: string | null;
   terms_accepted_at: string | null;
   privacy_accepted_at: string | null;
   marketing_consent: boolean;
   analytics_consent: boolean;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
+  last_login_at: string | null;
 }
 
 export interface Session {

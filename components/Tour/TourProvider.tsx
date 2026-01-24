@@ -95,15 +95,51 @@ export function TourProvider({ children }: TourProviderProps) {
   const pathname = usePathname();
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [hasCompletedTour, setHasCompletedTour] = useState(true);
+  const [hasCompletedTour, setHasCompletedTour] = useState(false); // CORRIGIDO: começa como false
   const [isInitialized, setIsInitialized] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Função para verificar se o tour foi completado (com suporte a userId)
+  const checkTourCompleted = useCallback((userId: string | null): boolean => {
+    if (!userId) return false;
+
+    // Verificar com userId específico
+    const userTourCompleted = localStorage.getItem(`${STORAGE_KEYS.tourCompleted}_${userId}`);
+    if (userTourCompleted === "true") {
+      return true;
+    }
+
+    // Fallback: verificar formato antigo e migrar
+    const legacyTourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
+    if (legacyTourCompleted === "true") {
+      // Migrar para o novo formato
+      localStorage.setItem(`${STORAGE_KEYS.tourCompleted}_${userId}`, "true");
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  // Função para verificar se termos foram aceitos
+  const checkTermsAccepted = useCallback((userId: string | null): boolean => {
+    // Verificar formato com userId
+    if (userId) {
+      const userTerms = localStorage.getItem(`termsAccepted_${userId}`);
+      if (userTerms === "true") return true;
+    }
+
+    // Fallback: verificar formato antigo
+    const legacyTerms = localStorage.getItem("termsAccepted");
+    return legacyTerms === "true";
+  }, []);
 
   // Função para verificar se deve iniciar o tour
-  const checkAndStartTour = useCallback((isLoggedIn: boolean) => {
-    const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
-    const termsAccepted = localStorage.getItem("termsAccepted");
+  const checkAndStartTour = useCallback((isLoggedIn: boolean, userId: string | null) => {
+    const tourCompleted = checkTourCompleted(userId);
+    const termsAccepted = checkTermsAccepted(userId);
 
-    setHasCompletedTour(tourCompleted === "true");
+    setHasCompletedTour(tourCompleted);
+    setCurrentUserId(userId);
 
     // Iniciar tour diretamente se:
     // 1. Tour nunca foi completado
@@ -111,53 +147,67 @@ export function TourProvider({ children }: TourProviderProps) {
     // 3. Não está em uma rota de autenticação
     // 4. Termos já foram aceitos (para não conflitar com WelcomeModal)
     const isAuthRoute = AUTH_ROUTES.includes(pathname);
-    if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted === "true") {
+    if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted) {
       setCurrentStepIndex(0);
       setIsTourActive(true);
     }
 
     setIsInitialized(true);
-  }, [pathname]);
+  }, [pathname, checkTourCompleted, checkTermsAccepted]);
 
   // Verificar autenticação inicial e escutar mudanças
   useEffect(() => {
     const supabase = getSupabaseClient();
+    let isMounted = true;
 
     // Verificar sessão inicial
     const checkInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      checkAndStartTour(!!session?.user);
+      if (isMounted) {
+        checkAndStartTour(!!session?.user, session?.user?.id || null);
+      }
     };
 
     checkInitialSession();
 
     // Escutar mudanças de autenticação (login/logout)
-    // O tour será iniciado pelo WelcomeModal após aceitar termos
-    // para evitar race condition e garantir ordem correta
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!isMounted) return;
+
         // Quando usuário faz login, verificar se deve iniciar tour
         if (event === "SIGNED_IN" && session?.user) {
-          const tourCompleted = localStorage.getItem(STORAGE_KEYS.tourCompleted);
-          const termsAccepted = localStorage.getItem("termsAccepted");
+          const userId = session.user.id;
+          const tourCompleted = checkTourCompleted(userId);
+          const termsAccepted = checkTermsAccepted(userId);
           const isAuthRoute = AUTH_ROUTES.includes(pathname);
+
+          setCurrentUserId(userId);
+          setHasCompletedTour(tourCompleted);
 
           // Só iniciar tour automaticamente se termos já foram aceitos
           // Caso contrário, o WelcomeModal irá iniciar o tour após aceite
-          if (!tourCompleted && !isAuthRoute && termsAccepted === "true") {
+          if (!tourCompleted && !isAuthRoute && termsAccepted) {
             setTimeout(() => {
-              setCurrentStepIndex(0);
-              setIsTourActive(true);
+              if (isMounted) {
+                setCurrentStepIndex(0);
+                setIsTourActive(true);
+              }
             }, 500);
           }
+        } else if (event === "SIGNED_OUT") {
+          setCurrentUserId(null);
+          setHasCompletedTour(false);
+          setIsTourActive(false);
         }
       }
     );
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [pathname, checkAndStartTour]);
+  }, [pathname, checkAndStartTour, checkTourCompleted, checkTermsAccepted]);
 
   const startTour = useCallback(() => {
     setCurrentStepIndex(0);
@@ -167,8 +217,14 @@ export function TourProvider({ children }: TourProviderProps) {
   const endTour = useCallback(() => {
     setIsTourActive(false);
     setHasCompletedTour(true);
+
+    // Salvar com userId se disponível
+    if (currentUserId) {
+      localStorage.setItem(`${STORAGE_KEYS.tourCompleted}_${currentUserId}`, "true");
+    }
+    // Também manter formato antigo para compatibilidade
     localStorage.setItem(STORAGE_KEYS.tourCompleted, "true");
-  }, []);
+  }, [currentUserId]);
 
   const nextStep = useCallback(() => {
     if (currentStepIndex < TOUR_STEPS.length - 1) {
@@ -195,11 +251,15 @@ export function TourProvider({ children }: TourProviderProps) {
   }, [endTour]);
 
   const resetTour = useCallback(() => {
+    // Remover com userId se disponível
+    if (currentUserId) {
+      localStorage.removeItem(`${STORAGE_KEYS.tourCompleted}_${currentUserId}`);
+    }
     localStorage.removeItem(STORAGE_KEYS.tourCompleted);
     setHasCompletedTour(false);
     setCurrentStepIndex(0);
     setIsTourActive(true);
-  }, []);
+  }, [currentUserId]);
 
   const currentStep = isTourActive ? TOUR_STEPS[currentStepIndex] : null;
   const totalSteps = TOUR_STEPS.length;

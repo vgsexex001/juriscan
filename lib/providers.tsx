@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { TourProvider } from "@/components/Tour";
 import { Tour } from "@/components/Tour";
@@ -21,55 +21,151 @@ function TermsGate({ children }: { children: ReactNode }) {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const pathname = usePathname();
 
-  useEffect(() => {
-    const checkAuthAndTerms = async () => {
+  // Função para verificar aceite de termos (banco + localStorage)
+  const checkTermsAccepted = useCallback(async (uid: string): Promise<boolean> => {
+    // Verificar localStorage primeiro (cache local)
+    const localTerms = localStorage.getItem(`termsAccepted_${uid}`);
+    if (localTerms === "true") {
+      return true;
+    }
+
+    // Fallback: verificar localStorage antigo (sem userId) para migração
+    const legacyTerms = localStorage.getItem("termsAccepted");
+    if (legacyTerms === "true") {
+      // Migrar para o novo formato
+      localStorage.setItem(`termsAccepted_${uid}`, "true");
+      localStorage.removeItem("termsAccepted");
+      return true;
+    }
+
+    // Verificar no banco de dados
+    try {
       const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("terms_accepted_at")
+        .eq("id", uid)
+        .single<{ terms_accepted_at: string | null }>();
 
-      const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route));
-      const termsAccepted = localStorage.getItem("termsAccepted");
-
-      setIsAuthenticated(!!session?.user);
-
-      // Mostrar modal se: logado + não aceitou termos + não em rota de auth
-      if (session?.user && !termsAccepted && !isAuthRoute) {
-        setShowTermsModal(true);
-      } else {
-        setShowTermsModal(false);
+      if (profile?.terms_accepted_at) {
+        // Sincronizar com localStorage
+        localStorage.setItem(`termsAccepted_${uid}`, "true");
+        return true;
       }
+    } catch (error) {
+      console.error("Erro ao verificar termos no banco:", error);
+    }
 
-      setIsChecking(false);
+    return false;
+  }, []);
+
+  // Verificação inicial e listener de auth
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    let isMounted = true;
+
+    const checkAuthAndTerms = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route));
+
+        if (!isMounted) return;
+
+        if (session?.user) {
+          setIsAuthenticated(true);
+          setUserId(session.user.id);
+
+          // Verificar termos
+          const hasAcceptedTerms = await checkTermsAccepted(session.user.id);
+
+          if (!isMounted) return;
+
+          // Mostrar modal se: logado + não aceitou termos + não em rota de auth
+          if (!hasAcceptedTerms && !isAuthRoute) {
+            setShowTermsModal(true);
+          } else {
+            setShowTermsModal(false);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setUserId(null);
+          setShowTermsModal(false);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar autenticação:", error);
+      } finally {
+        if (isMounted) {
+          setIsChecking(false);
+        }
+      }
     };
 
     checkAuthAndTerms();
 
-    // Também escutar mudanças de autenticação
-    const supabase = getSupabaseClient();
+    // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        if (!isMounted) return;
+
         const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route));
-        const termsAccepted = localStorage.getItem("termsAccepted");
 
-        setIsAuthenticated(!!session?.user);
+        if (event === "SIGNED_IN" && session?.user) {
+          setIsAuthenticated(true);
+          setUserId(session.user.id);
 
-        if (event === "SIGNED_IN" && session?.user && !termsAccepted && !isAuthRoute) {
-          setShowTermsModal(true);
+          // Aguardar um momento para o profile ser criado pelo trigger
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const hasAcceptedTerms = await checkTermsAccepted(session.user.id);
+
+          if (!isMounted) return;
+
+          if (!hasAcceptedTerms && !isAuthRoute) {
+            setShowTermsModal(true);
+          }
         } else if (event === "SIGNED_OUT") {
+          setIsAuthenticated(false);
+          setUserId(null);
           setShowTermsModal(false);
         }
       }
     );
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [pathname]);
+  }, [pathname, checkTermsAccepted]);
 
-  const handleAcceptTerms = () => {
+  const handleAcceptTerms = useCallback(async () => {
+    if (!userId) return;
+
+    try {
+      const supabase = getSupabaseClient();
+
+      // Salvar no banco de dados
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("profiles") as any)
+        .update({ terms_accepted_at: new Date().toISOString() })
+        .eq("id", userId);
+
+      // Salvar no localStorage (com userId para suportar múltiplos usuários)
+      localStorage.setItem(`termsAccepted_${userId}`, "true");
+
+      // Também manter o formato antigo para compatibilidade com TourProvider
+      localStorage.setItem("termsAccepted", "true");
+    } catch (error) {
+      console.error("Erro ao salvar aceite de termos:", error);
+      // Mesmo com erro no banco, salvar localmente
+      localStorage.setItem(`termsAccepted_${userId}`, "true");
+      localStorage.setItem("termsAccepted", "true");
+    }
+
     setShowTermsModal(false);
-  };
+  }, [userId]);
 
   // Não renderizar até verificar autenticação
   if (isChecking) {

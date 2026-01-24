@@ -13,7 +13,7 @@ import {
 import { useTour } from "@/hooks/useTour";
 
 interface WelcomeModalProps {
-  onAccept: () => void;
+  onAccept: () => void | Promise<void>;
 }
 
 const infoItems = [
@@ -81,20 +81,24 @@ const infoItems = [
 export default function WelcomeModal({ onAccept }: WelcomeModalProps) {
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { startTour, hasCompletedTour } = useTour();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleAccept = () => {
-    if (isTermsAccepted) {
-      localStorage.setItem("termsAccepted", "true");
-      onAccept();
+  const handleAccept = async () => {
+    if (isTermsAccepted && !isSubmitting) {
+      setIsSubmitting(true);
+
+      // Chamar callback do TermsGate que salva no banco e localStorage
+      await onAccept();
 
       // Iniciar tour automaticamente se nunca foi completado
+      // O tour será iniciado após um delay para garantir que o modal fechou
       if (!hasCompletedTour) {
-        setTimeout(() => startTour(), 500);
+        setTimeout(() => startTour(), 600);
       }
     }
   };
@@ -208,15 +212,15 @@ export default function WelcomeModal({ onAccept }: WelcomeModalProps) {
           {/* Submit Button */}
           <button
             onClick={handleAccept}
-            disabled={!isTermsAccepted}
+            disabled={!isTermsAccepted || isSubmitting}
             className={`w-full h-12 mt-4 rounded-button flex items-center justify-center gap-2 text-white font-medium transition-colors ${
-              isTermsAccepted
+              isTermsAccepted && !isSubmitting
                 ? "bg-primary hover:bg-primary-hover"
                 : "bg-gray-400 cursor-not-allowed"
             }`}
           >
             <Check className="w-5 h-5" />
-            <span>Aceitar termos</span>
+            <span>{isSubmitting ? "Salvando..." : "Aceitar termos"}</span>
           </button>
 
           {/* Disclaimer */}
