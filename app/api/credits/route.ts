@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { apiHandler, successResponse } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 interface CreditBalance {
@@ -26,56 +26,41 @@ interface Subscription {
 }
 
 // GET /api/credits - Get user's credit balance and history
-export async function GET() {
-  try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export const GET = apiHandler(async (_request, { user }) => {
+  const supabase = await createServerSupabaseClient();
 
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+  // Get credit balance
+  const { data: balanceData } = await supabase
+    .from("credit_balances")
+    .select("balance")
+    .eq("user_id", user!.id)
+    .single();
 
-    // Get credit balance
-    const { data: balanceData } = await supabase
-      .from("credit_balances")
-      .select("balance")
-      .eq("user_id", user.id)
-      .single();
+  const balance = balanceData as CreditBalance | null;
 
-    const balance = balanceData as CreditBalance | null;
+  // Get recent transactions
+  const { data: transactionsData } = await supabase
+    .from("credit_transactions")
+    .select("*")
+    .eq("user_id", user!.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
 
-    // Get recent transactions
-    const { data: transactionsData } = await supabase
-      .from("credit_transactions")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(20);
+  const transactions = (transactionsData || []) as CreditTransaction[];
 
-    const transactions = (transactionsData || []) as CreditTransaction[];
+  // Get subscription info
+  const { data: subscriptionData } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", user!.id)
+    .eq("status", "active")
+    .single();
 
-    // Get subscription info
-    const { data: subscriptionData } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .single();
+  const subscription = subscriptionData as Subscription | null;
 
-    const subscription = subscriptionData as Subscription | null;
-
-    return NextResponse.json({
-      balance: balance?.balance || 0,
-      transactions,
-      subscription,
-    });
-  } catch (error) {
-    console.error("Credits error:", error);
-    return NextResponse.json(
-      { error: "Erro ao buscar créditos" },
-      { status: 500 }
-    );
-  }
-}
+  return successResponse({
+    balance: balance?.balance || 0,
+    transactions,
+    subscription,
+  });
+});

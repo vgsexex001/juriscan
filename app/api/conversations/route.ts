@@ -1,88 +1,46 @@
-import { NextRequest, NextResponse } from "next/server";
+import { apiHandler, successResponse, parseBody } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { createConversationSchema, validateBody } from "@/lib/validation/schemas";
+import { createConversationSchema } from "@/lib/validation/schemas";
 
 // GET /api/conversations - List user's conversations
-export async function GET() {
-  try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export const GET = apiHandler(async (_request, { user }) => {
+  const supabase = await createServerSupabaseClient();
 
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("user_id", user!.id)
+    .eq("status", "ACTIVE")
+    .order("updated_at", { ascending: false });
 
-    const { data, error } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("status", "ACTIVE")
-      .order("updated_at", { ascending: false });
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Erro ao buscar conversas" },
-        { status: 500 }
-      );
-    }
-
-    const conversations = data || [];
-
-    return NextResponse.json({ conversations });
-  } catch {
-    return NextResponse.json(
-      { error: "Erro ao buscar conversas" },
-      { status: 500 }
-    );
+  if (error) {
+    throw new Error("Erro ao buscar conversas");
   }
-}
+
+  const conversations = data || [];
+
+  return successResponse({ conversations });
+});
 
 // POST /api/conversations - Create a new conversation
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export const POST = apiHandler(async (request, { user }) => {
+  const supabase = await createServerSupabaseClient();
 
-    if (!user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-    }
+  const { title } = await parseBody(request, createConversationSchema);
 
-    // Validate request body
-    const validation = await validateBody(request, createConversationSchema);
-    if (!validation.success) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
-    }
+  const { data, error } = await supabase
+    .from("conversations")
+    .insert({
+      user_id: user!.id,
+      title: title || "Nova conversa",
+      status: "ACTIVE",
+    } as never)
+    .select()
+    .single();
 
-    const { title } = validation.data;
-
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert({
-        user_id: user.id,
-        title: title || "Nova conversa",
-        status: "ACTIVE",
-      } as never)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Erro ao criar conversa" },
-        { status: 500 }
-      );
-    }
-
-    const conversation = data;
-
-    return NextResponse.json({ conversation });
-  } catch {
-    return NextResponse.json(
-      { error: "Erro ao criar conversa" },
-      { status: 500 }
-    );
+  if (error) {
+    throw new Error("Erro ao criar conversa");
   }
-}
+
+  return successResponse({ conversation: data });
+});

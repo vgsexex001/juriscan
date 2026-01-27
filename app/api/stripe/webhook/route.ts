@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { headers } from "next/headers";
+import { successResponse, errorResponse, ValidationError } from "@/lib/api";
 import { getStripe, PLANS } from "@/lib/stripe/config";
 import { createAdminClient } from "@/lib/supabase/server";
 import { addCredits } from "@/services/credit.service";
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
   const signature = headersList.get("stripe-signature");
 
   if (!signature) {
-    return NextResponse.json({ error: "No signature" }, { status: 400 });
+    return errorResponse(new ValidationError("No signature"));
   }
 
   let event: Stripe.Event;
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return errorResponse(new ValidationError("Invalid signature"));
   }
 
   const supabase = await createAdminClient();
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingEvent) {
-      return NextResponse.json({ received: true, skipped: true });
+      return successResponse({ received: true, skipped: true });
     }
 
     // Record event as processed before handling (prevents duplicates)
@@ -81,13 +82,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ received: true });
+    return successResponse({ received: true });
   } catch (error) {
     console.error("Webhook handler error:", error);
-    return NextResponse.json(
-      { error: "Webhook handler failed" },
-      { status: 500 }
-    );
+    return errorResponse(error as Error);
   }
 }
 
