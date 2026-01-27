@@ -226,8 +226,6 @@ export function TourProvider({ children }: TourProviderProps) {
     if (currentUserId) {
       localStorage.setItem(`${STORAGE_KEYS.tourCompleted}_${currentUserId}`, "true");
     }
-    // Também manter formato antigo para compatibilidade
-    localStorage.setItem(STORAGE_KEYS.tourCompleted, "true");
   }, [currentUserId]);
 
   const nextStep = useCallback(() => {

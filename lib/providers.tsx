@@ -153,14 +153,10 @@ function TermsGate({ children }: { children: ReactNode }) {
 
       // Salvar no localStorage (com userId para suportar múltiplos usuários)
       localStorage.setItem(`termsAccepted_${userId}`, "true");
-
-      // Também manter o formato antigo para compatibilidade com TourProvider
-      localStorage.setItem("termsAccepted", "true");
     } catch (error) {
       console.error("Erro ao salvar aceite de termos:", error);
       // Mesmo com erro no banco, salvar localmente
       localStorage.setItem(`termsAccepted_${userId}`, "true");
-      localStorage.setItem("termsAccepted", "true");
     }
 
     setShowTermsModal(false);
