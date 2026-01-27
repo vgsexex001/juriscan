@@ -70,7 +70,9 @@ function TermsGate({ children }: { children: ReactNode }) {
     const checkAuthAndTerms = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route));
+        // Usar window.location.pathname para evitar closure stale
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+        const isAuthRoute = AUTH_ROUTES.some(route => currentPath.startsWith(route));
 
         if (!isMounted) return;
 
@@ -106,7 +108,9 @@ function TermsGate({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (!isMounted) return;
 
-        const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route));
+        // Usar window.location.pathname para evitar closure stale
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+        const isAuthRoute = AUTH_ROUTES.some(route => currentPath.startsWith(route));
 
         if (event === "SIGNED_IN" && session?.user) {
           setIsAuthenticated(true);

@@ -146,7 +146,9 @@ export function TourProvider({ children }: TourProviderProps) {
     // 2. Usuário está logado
     // 3. Não está em uma rota de autenticação
     // 4. Termos já foram aceitos (para não conflitar com WelcomeModal)
-    const isAuthRoute = AUTH_ROUTES.includes(pathname);
+    // Usar window.location.pathname para evitar closure stale
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+    const isAuthRoute = AUTH_ROUTES.includes(currentPath);
     if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted) {
       setCurrentStepIndex(0);
       setIsTourActive(true);
@@ -180,7 +182,9 @@ export function TourProvider({ children }: TourProviderProps) {
           const userId = session.user.id;
           const tourCompleted = checkTourCompleted(userId);
           const termsAccepted = checkTermsAccepted(userId);
-          const isAuthRoute = AUTH_ROUTES.includes(pathname);
+          // Usar window.location.pathname para evitar closure stale
+          const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
+          const isAuthRoute = AUTH_ROUTES.includes(currentPath);
 
           setCurrentUserId(userId);
           setHasCompletedTour(tourCompleted);
