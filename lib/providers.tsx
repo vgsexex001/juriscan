@@ -84,11 +84,7 @@ function TermsGate({ children }: { children: ReactNode }) {
           if (!isMounted) return;
 
           // Mostrar modal se: logado + não aceitou termos + não em rota de auth
-          if (!hasAcceptedTerms && !isAuthRoute) {
-            setShowTermsModal(true);
-          } else {
-            setShowTermsModal(false);
-          }
+          setShowTermsModal(!hasAcceptedTerms && !isAuthRoute);
         } else {
           setIsAuthenticated(false);
           setUserId(null);
@@ -123,9 +119,8 @@ function TermsGate({ children }: { children: ReactNode }) {
 
           if (!isMounted) return;
 
-          if (!hasAcceptedTerms && !isAuthRoute) {
-            setShowTermsModal(true);
-          }
+          // CORREÇÃO: Sempre setar o estado explicitamente
+          setShowTermsModal(!hasAcceptedTerms && !isAuthRoute);
         } else if (event === "SIGNED_OUT") {
           setIsAuthenticated(false);
           setUserId(null);
