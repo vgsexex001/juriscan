@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { uuidSchema } from "./common";
+
+// Re-export uuidSchema for backwards compatibility
+export { uuidSchema };
 
 // Chat API schemas
 export const chatMessageSchema = z.object({
@@ -21,9 +25,6 @@ export const updateConversationSchema = z.object({
 });
 
 export type UpdateConversationInput = z.infer<typeof updateConversationSchema>;
-
-// UUID validation helper
-export const uuidSchema = z.string().uuid("ID inválido");
 
 // Helper function to validate and parse request body
 export async function validateBody<T>(
