@@ -1,230 +1,80 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Menu,
   Scale,
-  FileText,
-  Brain,
-  HardDrive,
-  Search,
   Plus,
-  User,
+  FileText,
+  Loader2,
+  Filter,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import HistoricoMetricCard from "@/components/HistoricoMetricCard";
-import ReportCard from "@/components/ReportCard";
-import TemplateCard from "@/components/TemplateCard";
 import LegalDisclaimer from "@/components/LegalDisclaimer";
+import ReportCard from "@/components/Reports/ReportCard";
+import CreateReportModal from "@/components/Reports/CreateReportModal";
+import ReportViewer from "@/components/Reports/ReportViewer";
+import { useReports, useReport } from "@/hooks/useReports";
+import { useCredits } from "@/hooks/useCredits";
+import type { Report, ReportType, CreateReportInput } from "@/types/reports";
 
-// Metrics data
-const metricsData = [
-  {
-    icon: FileText,
-    iconColor: "#1C398E",
-    value: "5",
-    label: "Total de Relatórios",
-  },
-  {
-    icon: Brain,
-    iconColor: "#8B5CF6",
-    value: "2",
-    label: "Análises Preditivas",
-  },
-  {
-    icon: Scale,
-    iconColor: "#3B82F6",
-    value: "1",
-    label: "Jurimetria",
-  },
-  {
-    icon: HardDrive,
-    iconColor: "#10B981",
-    value: "14.3 MB",
-    label: "Uso Total",
-  },
-];
-
-// Reports data
-const reportsData = [
-  {
-    id: 1,
-    title: "Análise Estratégica Completa - Ação de Cobrança",
-    badges: [
-      { text: "Análise Preditiva", background: "#EEF2FF", color: "#1C398E" },
-      { text: "v2.1", background: "#F3F4F6", color: "#6B7280" },
-    ],
-    origin: {
-      icon: "MessageSquare",
-      label: "Origem da Análise",
-      value: "Análise IA - Chat Jurídico",
-      subValue: "ID: ANL-2024-00124",
-    },
-    details: [
-      { icon: "FileText", label: "Processo: 0001234-56.2024.8.26.0100" },
-      { icon: "Building", badge: { text: "TJSP", background: "#EEF2FF", color: "#1C398E" } },
-      { icon: "Calendar", value: "10/12/2024, 14:25" },
-      { icon: "FileText", value: "15 páginas" },
-      { icon: "HardDrive", value: "2.4 MB" },
-      { icon: "TrendingUp", label: "Predição:", value: "72%", color: "#10B981" },
-    ],
-    downloadColor: "#1C398E",
-  },
-  {
-    id: 2,
-    title: "Jurimetria Tribunal - TJSP 2024",
-    badges: [
-      { text: "Jurimetria", background: "#DBEAFE", color: "#2563EB" },
-      { text: "v1.0", background: "#F3F4F6", color: "#6B7280" },
-    ],
-    origin: {
-      icon: "FileText",
-      label: "Origem da Análise",
-      value: "Análise Manual",
-      subValue: "ID: JMT-2024-00089",
-    },
-    details: [
-      { icon: "Layers", label: "Processo: Múltiplos processos" },
-      { icon: "Building", badge: { text: "TJSP", background: "#EEF2FF", color: "#1C398E" } },
-      { icon: "Calendar", value: "08/12/2024, 18:20" },
-      { icon: "FileText", value: "34 páginas" },
-      { icon: "HardDrive", value: "5.8 MB" },
-    ],
-    downloadColor: "#1C398E",
-  },
-  {
-    id: 3,
-    title: "Relatório Executivo - Revisional de Aluguel",
-    badges: [
-      { text: "Executivo", background: "#FEF3C7", color: "#D97706" },
-      { text: "v1.2", background: "#F3F4F6", color: "#6B7280" },
-    ],
-    origin: {
-      icon: "Upload",
-      label: "Origem da Análise",
-      value: "Upload de Documentos",
-      subValue: "ID: ANL-2024-00156",
-    },
-    details: [
-      { icon: "FileText", label: "Processo: 0005678-90.2024.8.13.0024" },
-      { icon: "Building", badge: { text: "TJMG", background: "#DCFCE7", color: "#16A34A" } },
-      { icon: "Calendar", value: "11/12/2024, 17:50" },
-      { icon: "FileText", value: "5 páginas" },
-      { icon: "HardDrive", value: "1.2 MB" },
-      { icon: "TrendingDown", label: "Predição:", value: "58%", color: "#F59E0B" },
-    ],
-    downloadColor: "#F59E0B",
-  },
-  {
-    id: 4,
-    title: "Análise de Relator - Des. José Carlos",
-    badges: [
-      { text: "Relator", background: "#F3E8FF", color: "#7C3AED" },
-      { text: "v1.0", background: "#F3F4F6", color: "#6B7280" },
-    ],
-    origin: {
-      icon: "Search",
-      label: "Origem da Análise",
-      value: "Investigação Jurimetrica",
-      subValue: "ID: REL-2024-00034",
-    },
-    details: [
-      { icon: "FileText", label: "Processo: Análise Avulsa" },
-      { icon: "Building", badge: { text: "TJSP", background: "#EEF2FF", color: "#1C398E" } },
-      { icon: "Calendar", value: "08/12/2024, 10:15" },
-      { icon: "FileText", value: "22 páginas" },
-      { icon: "HardDrive", value: "3.1 MB" },
-    ],
-    downloadColor: "#7C3AED",
-  },
-  {
-    id: 5,
-    title: "Predição Estratégica Detalhada - Indenização",
-    badges: [
-      { text: "Análise Preditiva", background: "#EEF2FF", color: "#1C398E" },
-      { text: "v1.0", background: "#F3F4F6", color: "#6B7280" },
-    ],
-    origin: {
-      icon: "MessageSquare",
-      label: "Origem da Análise",
-      value: "Análise IA - Chat Jurídico",
-      subValue: "ID: ANL-2024-00148",
-    },
-    details: [
-      { icon: "FileText", label: "Processo: 0003456-78.2024.8.21.0001" },
-      { icon: "Building", badge: { text: "TJRS", background: "#FEE2E2", color: "#DC2626" } },
-      { icon: "Calendar", value: "09/12/2024, 11:35" },
-      { icon: "FileText", value: "8 páginas" },
-      { icon: "HardDrive", value: "1.8 MB" },
-      { icon: "TrendingUp", label: "Predição:", value: "75%", color: "#10B981" },
-    ],
-    downloadColor: "#1C398E",
-  },
-];
-
-// Templates data
-const templatesData = [
-  {
-    icon: Brain,
-    iconBackground: "#EEF2FF",
-    iconColor: "#1C398E",
-    title: "Análise Preditiva Estratégica",
-    description: "Análises, previsões e perspectivas com pontos-chave",
-  },
-  {
-    icon: Scale,
-    iconBackground: "#DBEAFE",
-    iconColor: "#2563EB",
-    title: "Relatório Jurimetrico",
-    description: "Estatísticas e padrões por tribunal",
-  },
-  {
-    icon: User,
-    iconBackground: "#F3E8FF",
-    iconColor: "#7C3AED",
-    title: "Relator",
-    description: "Perfil de decisões",
-  },
+const filterOptions: { value: ReportType | "all"; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "PREDICTIVE_ANALYSIS", label: "Análise Preditiva" },
+  { value: "JURIMETRICS", label: "Jurimetria" },
+  { value: "RELATOR_PROFILE", label: "Perfil de Relator" },
 ];
 
 export default function RelatoriosPage() {
-  const [mounted, setMounted] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [typeFilter, setTypeFilter] = useState<ReportType | "all">("all");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const { balance } = useCredits();
+  const {
+    reports,
+    isLoading,
+    createReport,
+    isCreating,
+    deleteReport,
+    isDeleting,
+  } = useReports({
+    type: typeFilter === "all" ? undefined : typeFilter,
+  });
 
-  // Filter reports based on search query
-  const filteredReports = reportsData.filter(
-    (report) =>
-      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.badges.some((badge) =>
-        badge.text.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
+  const {
+    report: fullReport,
+    generateReport,
+    isGenerating,
+  } = useReport(selectedReport?.id || null);
 
-  const handleDownload = (id: number) => {
-    console.log("Download report:", id);
+  const handleCreateReport = async (input: CreateReportInput) => {
+    const report = await createReport(input);
+    setIsCreateModalOpen(false);
+    setSelectedReport(report);
   };
 
-  const handleView = (id: number) => {
-    console.log("View report:", id);
+  const handleViewReport = (report: Report) => {
+    setSelectedReport(report);
   };
 
-  const handleShare = (id: number) => {
-    console.log("Share report:", id);
+  const handleCloseViewer = () => {
+    setSelectedReport(null);
   };
 
-  const handleNewVersion = (id: number) => {
-    console.log("Generate new version:", id);
+  const handleGenerateReport = async () => {
+    if (!selectedReport) return;
+    await generateReport();
   };
 
-  const handleTemplateClick = (title: string) => {
-    console.log("Selected template:", title);
+  const handleDeleteReport = (reportId: string) => {
+    if (confirm("Tem certeza que deseja excluir este relatório?")) {
+      deleteReport(reportId);
+      if (selectedReport?.id === reportId) {
+        setSelectedReport(null);
+      }
+    }
   };
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -258,76 +108,102 @@ export default function RelatoriosPage() {
                 Gerencie documentos analíticos e relatórios preditivos
               </p>
             </div>
-            <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+            >
               <Plus className="w-4 h-4" />
               Novo Relatório
             </button>
           </div>
 
-          {/* Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {metricsData.map((metric, index) => (
-              <HistoricoMetricCard key={index} {...metric} />
-            ))}
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar relatórios..."
-              className="w-full h-11 pl-12 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm focus:outline-none focus:border-primary"
-              aria-label="Buscar relatórios"
-            />
-          </div>
-
-          {/* Reports Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
-            {filteredReports.map((report) => (
-              <ReportCard
-                key={report.id}
-                report={report}
-                onDownload={handleDownload}
-                onView={handleView}
-                onShare={handleShare}
-                onNewVersion={handleNewVersion}
-              />
-            ))}
-          </div>
-
-          {/* Empty State */}
-          {filteredReports.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center mb-8">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">
-                Nenhum relatório encontrado para &quot;{searchQuery}&quot;
-              </p>
+          {/* Filters */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-500">Filtrar:</span>
             </div>
-          )}
-
-          {/* Templates Section */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Modelos de Relatório Estratégico
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {templatesData.map((template, index) => (
-                <TemplateCard
-                  key={index}
-                  {...template}
-                  onClick={() => handleTemplateClick(template.title)}
-                />
+            <div className="flex gap-2">
+              {filterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setTypeFilter(option.value)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                    typeFilter === option.value
+                      ? "bg-primary text-white"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
               ))}
             </div>
           </div>
+
+          {/* Reports Grid */}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : reports.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-8 h-8 text-gray-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                Nenhum relatório encontrado
+              </h2>
+              <p className="text-gray-500 max-w-sm mx-auto mb-6">
+                {typeFilter !== "all"
+                  ? "Não há relatórios deste tipo. Tente outro filtro ou crie um novo."
+                  : "Comece criando seu primeiro relatório estratégico para análise jurídica."}
+              </p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Criar Relatório
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {reports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  onView={handleViewReport}
+                  onDelete={handleDeleteReport}
+                  isDeleting={isDeleting}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Legal Disclaimer */}
           <LegalDisclaimer />
         </main>
       </div>
+
+      {/* Create Report Modal */}
+      <CreateReportModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateReport}
+        isCreating={isCreating}
+        balance={balance}
+      />
+
+      {/* Report Viewer */}
+      {selectedReport && (
+        <ReportViewer
+          report={fullReport || selectedReport}
+          isOpen={!!selectedReport}
+          onClose={handleCloseViewer}
+          onGenerate={handleGenerateReport}
+          isGenerating={isGenerating}
+        />
+      )}
     </div>
   );
 }
