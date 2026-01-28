@@ -442,6 +442,13 @@ CREATE TABLE public.processed_webhook_events (
 
 CREATE INDEX idx_processed_webhook_events_stripe_id ON public.processed_webhook_events(stripe_event_id);
 
+-- RLS para processed_webhook_events (apenas service role)
+ALTER TABLE public.processed_webhook_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "No client access to webhook events"
+  ON public.processed_webhook_events FOR ALL
+  USING (false);
+
 -- Limpar eventos antigos (mais de 7 dias) - pode ser executado via cron
 -- DELETE FROM public.processed_webhook_events WHERE processed_at < NOW() - INTERVAL '7 days';
 
