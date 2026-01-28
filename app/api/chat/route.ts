@@ -70,10 +70,18 @@ function buildMessageContent(
       );
     }
 
-    if (att.type === "audio" && att.metadata.transcription) {
-      contextParts.push(
-        `[Transcrição do áudio enviado]:\n${att.metadata.transcription}`
-      );
+    if (att.type === "audio") {
+      if (att.metadata.transcription) {
+        console.log(`🎤 Including audio transcription: "${att.metadata.transcription.substring(0, 100)}..."`);
+        contextParts.push(
+          `[Transcrição do áudio enviado]:\n${att.metadata.transcription}`
+        );
+      } else {
+        console.log(`⚠️ Audio "${att.name}" has no transcription in metadata`);
+        contextParts.push(
+          `[O usuário enviou um áudio, mas não foi possível transcrevê-lo. Informe que você não conseguiu ouvir o áudio.]`
+        );
+      }
     }
 
     if (att.type === "image") {

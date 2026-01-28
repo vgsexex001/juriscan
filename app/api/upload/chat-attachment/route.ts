@@ -7,6 +7,7 @@ import {
   type AttachmentMetadata,
 } from "@/types/chat";
 import { extractTextFromFile, truncateText } from "@/lib/document/extractor";
+import { getOpenAI } from "@/lib/ai/config";
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = "force-dynamic";
@@ -121,6 +122,34 @@ export async function POST(request: NextRequest) {
       } catch (extractError) {
         console.error(`❌ Text extraction failed for ${file.name}:`, extractError);
         // Continua sem texto extraído - não bloqueia o upload
+      }
+    }
+
+    // Transcrever áudio automaticamente com Whisper
+    if (attachmentType === "audio") {
+      try {
+        console.log(`🎤 Transcribing audio: ${file.name} (${file.type}, ${file.size} bytes)`);
+
+        const openai = getOpenAI();
+
+        // Chamar Whisper API para transcrição
+        const transcription = await openai.audio.transcriptions.create({
+          file: file,
+          model: "whisper-1",
+          language: "pt", // Português
+          response_format: "text",
+        });
+
+        if (transcription && transcription.length > 0) {
+          metadata.transcription = transcription;
+          console.log(`✅ Audio transcribed: "${transcription.substring(0, 100)}..."`);
+        } else {
+          console.log(`⚠️ No transcription returned for ${file.name}`);
+        }
+      } catch (transcribeError) {
+        console.error(`❌ Audio transcription failed for ${file.name}:`, transcribeError);
+        // Continua sem transcrição - não bloqueia o upload
+        // O usuário ainda pode ver/ouvir o áudio
       }
     }
 
