@@ -83,7 +83,7 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            conversationId,
+            ...(conversationId && { conversationId }),
             message: content,
           }),
           signal: abortControllerRef.current.signal,
