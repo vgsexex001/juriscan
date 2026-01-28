@@ -4,6 +4,9 @@ import { getOpenAI } from "@/lib/ai/config";
 import { deductCredits } from "@/services/credit.service";
 import { CHAT_ATTACHMENT_COSTS, CHAT_ATTACHMENT_LIMITS } from "@/types/chat";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = "force-dynamic";
+
 // POST /api/chat/transcribe - Transcrever áudio usando Whisper
 export async function POST(request: NextRequest) {
   try {

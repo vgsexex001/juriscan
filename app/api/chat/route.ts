@@ -7,6 +7,9 @@ import { deductCredits } from "@/services/credit.service";
 import { dbInsertAndSelect, dbInsert, dbUpdateQuery } from "@/lib/supabase/db";
 import type { ChatAttachment } from "@/types/chat";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = "force-dynamic";
+
 // Tipos para mensagens da OpenAI
 type ContentPart =
   | { type: "text"; text: string }

@@ -7,6 +7,9 @@ import {
   type AttachmentMetadata,
 } from "@/types/chat";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = "force-dynamic";
+
 // POST /api/upload/chat-attachment - Upload de arquivo para o chat
 export async function POST(request: NextRequest) {
   try {

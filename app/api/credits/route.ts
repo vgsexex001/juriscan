@@ -1,6 +1,9 @@
 import { apiHandler, successResponse } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = "force-dynamic";
+
 interface CreditBalance {
   balance: number;
 }

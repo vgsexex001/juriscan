@@ -6,6 +6,9 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { addCredits } from "@/services/credit.service";
 import Stripe from "stripe";
 
+// Force dynamic rendering for webhook routes
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const headersList = await headers();

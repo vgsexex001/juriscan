@@ -2,6 +2,9 @@ import { apiHandler, successResponse, parseBody } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createConversationSchema } from "@/lib/validation/schemas";
 
+// Force dynamic rendering for authenticated routes
+export const dynamic = "force-dynamic";
+
 // GET /api/conversations - List user's conversations
 export const GET = apiHandler(async (_request, { user }) => {
   const supabase = await createServerSupabaseClient();
