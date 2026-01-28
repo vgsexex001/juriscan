@@ -51,6 +51,7 @@ function buildMessageContent(
   }
 
   const parts: ContentPart[] = [];
+  const imageParts: ContentPart[] = [];
 
   // Adicionar contexto de arquivos e áudio
   const contextParts: string[] = [];
@@ -77,7 +78,8 @@ function buildMessageContent(
 
     if (att.type === "image") {
       // Adicionar imagem para GPT-4 Vision
-      parts.push({
+      console.log(`🖼️ Including image "${att.name}" with URL: ${att.url.substring(0, 100)}...`);
+      imageParts.push({
         type: "image_url",
         image_url: {
           url: att.url,
@@ -94,13 +96,15 @@ function buildMessageContent(
   }
 
   // Se não há imagens, retornar apenas texto
-  const hasImages = attachments.some((att) => att.type === "image");
-  if (!hasImages) {
+  if (imageParts.length === 0) {
     return fullText;
   }
 
-  // Se há imagens, retornar array de content parts
-  parts.unshift({ type: "text", text: fullText });
+  // IMPORTANTE: Texto PRIMEIRO, depois imagens (melhor para GPT-4 Vision)
+  parts.push({ type: "text", text: fullText });
+  parts.push(...imageParts);
+
+  console.log(`📨 Built message with ${parts.length} parts (1 text + ${imageParts.length} images)`);
   return parts;
 }
 
@@ -189,6 +193,18 @@ export const POST = apiHandler(async (request, { user }) => {
       (msg.attachments || []) as ChatAttachment[]
     );
     formattedMessages.push({ role, content });
+  }
+
+  // Log para debug
+  console.log(`🤖 Sending ${formattedMessages.length} messages to OpenAI (model: ${AI_CONFIG.model})`);
+  for (let i = 0; i < formattedMessages.length; i++) {
+    const msg = formattedMessages[i];
+    if (Array.isArray(msg.content)) {
+      const types = msg.content.map((p) => p.type).join(", ");
+      console.log(`  [${i}] ${msg.role}: [${types}]`);
+    } else {
+      console.log(`  [${i}] ${msg.role}: ${(msg.content as string).substring(0, 50)}...`);
+    }
   }
 
   // Create streaming response
