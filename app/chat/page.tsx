@@ -481,7 +481,7 @@ function ChatContent() {
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,image/jpeg,image/png,image/gif,image/webp,image/bmp"
+                  accept=".jpg, .jpeg, .png, .gif, .webp"
                   multiple
                   onChange={handleFileSelect}
                   className="hidden"
