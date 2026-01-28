@@ -4,11 +4,33 @@ import { uuidSchema } from "./common";
 // Re-export uuidSchema for backwards compatibility
 export { uuidSchema };
 
+// Attachment schema
+export const attachmentSchema = z.object({
+  id: z.string(),
+  type: z.enum(["file", "image", "audio"]),
+  name: z.string(),
+  url: z.string().url(),
+  size: z.number(),
+  mime_type: z.string(),
+  metadata: z.object({
+    pages: z.number().optional(),
+    extracted_text: z.string().optional(),
+    width: z.number().optional(),
+    height: z.number().optional(),
+    duration: z.number().optional(),
+    transcription: z.string().optional(),
+  }).optional().default({}),
+});
+
 // Chat API schemas
 export const chatMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
-  message: z.string().min(1, "Mensagem não pode estar vazia").max(10000, "Mensagem muito longa"),
-});
+  message: z.string().max(10000, "Mensagem muito longa").default(""),
+  attachments: z.array(attachmentSchema).max(5).optional().default([]),
+}).refine(
+  (data) => data.message.trim().length > 0 || (data.attachments && data.attachments.length > 0),
+  { message: "Mensagem ou anexo é obrigatório" }
+);
 
 export type ChatMessageInput = z.infer<typeof chatMessageSchema>;
 

@@ -13,14 +13,19 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
+  Image as ImageIcon,
+  FileText,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import ChatMessage from "@/components/ChatMessage";
 import SuggestionCards from "@/components/SuggestionCards";
 import LegalDisclaimerInline from "@/components/LegalDisclaimerInline";
+import { ChatAttachmentPreview, ChatAudioRecorder } from "@/components/Chat";
 import { useConversations, useConversation } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { useCredits } from "@/hooks/useCredits";
+import { useChatAttachments } from "@/hooks/useChatAttachments";
+import type { ChatAttachment } from "@/types/chat";
 
 const suggestions = [
   { text: "Analisar estratégia processual 0001234-56.2024.8.26.0100" },
@@ -40,9 +45,13 @@ function ChatContent() {
     conversationIdParam
   );
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { conversations, isLoading: isLoadingConversations, deleteConversation } =
     useConversations();
@@ -55,6 +64,20 @@ function ChatContent() {
       router.push(`/chat?id=${id}`, { scroll: false });
     },
   });
+
+  const {
+    attachments,
+    uploadProgress,
+    isUploading,
+    error: attachmentError,
+    addAttachment,
+    addAudioAttachment,
+    removeAttachment,
+    clearAttachments,
+    uploadAttachments,
+    transcribeAudio,
+    totalCost,
+  } = useChatAttachments();
 
   useEffect(() => {
     setMounted(true);
@@ -70,6 +93,15 @@ function ChatContent() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Fechar menu de anexos ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = () => setShowAttachMenu(false);
+    if (showAttachMenu) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [showAttachMenu]);
 
   const handleNewConversation = () => {
     setCurrentConversationId(null);
@@ -91,17 +123,25 @@ function ChatContent() {
     }
   };
 
-  const handleSendMessage = (messageText?: string) => {
+  const handleSendMessage = async (messageText?: string) => {
     const text = messageText || inputValue.trim();
-    if (!text || isStreaming) return;
+    if ((!text && attachments.length === 0) || isStreaming || isUploading) return;
 
-    if (balance < 1) {
-      alert("Créditos insuficientes. Por favor, adquira mais créditos para continuar.");
+    if (balance < totalCost) {
+      alert(`Créditos insuficientes. Você precisa de ${totalCost} créditos.`);
       return;
     }
 
-    sendMessage(text);
+    // Upload attachments primeiro
+    let uploadedAttachments: ChatAttachment[] = [];
+    if (attachments.length > 0) {
+      uploadedAttachments = await uploadAttachments();
+    }
+
+    // Enviar mensagem
+    sendMessage(text, uploadedAttachments);
     setInputValue("");
+    clearAttachments();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -115,7 +155,26 @@ function ChatContent() {
     handleSendMessage(text);
   };
 
-  const showSuggestions = messages.length === 0;
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    for (const file of Array.from(files)) {
+      await addAttachment(file);
+    }
+
+    // Reset input
+    if (e.target) e.target.value = "";
+    setShowAttachMenu(false);
+  };
+
+  const handleAudioComplete = (blob: Blob, duration: number) => {
+    addAudioAttachment(blob, duration);
+    setIsRecordingAudio(false);
+  };
+
+  const showSuggestions = messages.length === 0 && attachments.length === 0;
+  const hasAttachments = attachments.length > 0;
 
   if (!mounted) return null;
 
@@ -252,10 +311,10 @@ function ChatContent() {
           aria-label="Histórico de mensagens"
         >
           {/* Error Message */}
-          {chatError && (
+          {(chatError || attachmentError) && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{chatError}</span>
+              <span className="text-sm">{chatError || attachmentError}</span>
             </div>
           )}
 
@@ -275,6 +334,11 @@ function ChatContent() {
                     {"\n\n"}
                     Você pode me enviar um número de processo, texto descrevendo um caso,
                     ou fazer perguntas sobre legislação e jurisprudência.
+                    {"\n\n"}
+                    <span className="text-gray-500">
+                      💡 Agora você também pode enviar arquivos PDF, imagens de documentos
+                      ou gravar mensagens de áudio!
+                    </span>
                   </p>
                 </div>
               </div>
@@ -296,6 +360,7 @@ function ChatContent() {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
+                attachments={(message as { attachments?: ChatAttachment[] }).attachments}
               />
             ))
           )}
@@ -342,47 +407,148 @@ function ChatContent() {
         {/* Input Area */}
         <div className="fixed bottom-0 left-0 lg:left-60 right-0 bg-white border-t border-gray-200 p-4 z-10">
           <div className="max-w-4xl mx-auto">
-            <div data-tour="chat-input" className="flex items-center gap-3 bg-gray-50 rounded-full border border-gray-200 px-4 py-2 focus-within:border-blue-500 transition-colors">
-              {/* Attach Button */}
-              <button
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Anexar arquivo"
-              >
-                <Paperclip className="w-5 h-5" />
-              </button>
-
-              {/* Input Field */}
-              <input
-                ref={inputRef}
-                id="chat-input-field"
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Descreva o caso, informe o número do processo ou faça uma pergunta estratégica..."
-                className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 placeholder-gray-400"
-                disabled={isStreaming}
+            {/* Attachment Preview */}
+            {hasAttachments && (
+              <ChatAttachmentPreview
+                attachments={attachments}
+                uploadProgress={uploadProgress}
+                isUploading={isUploading}
+                onRemove={removeAttachment}
+                onTranscribe={transcribeAudio}
               />
+            )}
 
-              {/* Credit Balance */}
-              <span className="text-xs text-gray-400 hidden sm:block">
-                {balance} créditos
-              </span>
-
-              {/* Send Button */}
-              <button
-                onClick={() => handleSendMessage()}
-                disabled={!inputValue.trim() || isStreaming || balance < 1}
-                className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
-                aria-label="Enviar mensagem"
+            {/* Audio Recorder */}
+            {isRecordingAudio ? (
+              <div className="flex items-center justify-center py-2">
+                <ChatAudioRecorder
+                  onRecordingComplete={handleAudioComplete}
+                  onCancel={() => setIsRecordingAudio(false)}
+                  disabled={isStreaming || isUploading}
+                />
+              </div>
+            ) : (
+              <div
+                data-tour="chat-input"
+                className={`flex items-center gap-3 bg-gray-50 border border-gray-200 px-4 py-2 focus-within:border-blue-500 transition-colors ${
+                  hasAttachments ? "rounded-b-full" : "rounded-full"
+                }`}
               >
-                {isStreaming ? (
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4 text-white" />
-                )}
-              </button>
-            </div>
+                {/* Attach Button with Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAttachMenu(!showAttachMenu);
+                    }}
+                    disabled={isStreaming || isUploading}
+                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
+                    aria-label="Anexar arquivo"
+                  >
+                    <Paperclip className="w-5 h-5" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showAttachMenu && (
+                    <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <FileText className="w-4 h-4 text-amber-500" />
+                        Documento
+                      </button>
+                      <button
+                        onClick={() => imageInputRef.current?.click()}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <ImageIcon className="w-4 h-4 text-blue-500" />
+                        Imagem
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Hidden File Inputs */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                {/* Input Field */}
+                <input
+                  ref={inputRef}
+                  id="chat-input-field"
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Descreva o caso, informe o número do processo ou faça uma pergunta estratégica..."
+                  className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 placeholder-gray-400"
+                  disabled={isStreaming || isUploading}
+                />
+
+                {/* Credit Balance */}
+                <span className="text-xs text-gray-400 hidden sm:block">
+                  {hasAttachments ? `${totalCost} créditos` : `${balance} créditos`}
+                </span>
+
+                {/* Audio Record Button */}
+                <button
+                  onClick={() => setIsRecordingAudio(true)}
+                  disabled={isStreaming || isUploading}
+                  className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 disabled:opacity-50 rounded-lg transition-colors"
+                  aria-label="Gravar áudio"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" x2="12" y1="19" y2="22" />
+                  </svg>
+                </button>
+
+                {/* Send Button */}
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={
+                    (!inputValue.trim() && attachments.length === 0) ||
+                    isStreaming ||
+                    isUploading ||
+                    balance < totalCost
+                  }
+                  className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
+                  aria-label="Enviar mensagem"
+                >
+                  {isStreaming || isUploading ? (
+                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 text-white" />
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Legal Disclaimer */}
             <LegalDisclaimerInline />

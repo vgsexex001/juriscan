@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Message } from "./useConversations";
+import type { ChatAttachment } from "@/types/chat";
 
 interface UseChatOptions {
   conversationId: string | null;
@@ -16,6 +17,11 @@ interface StreamEvent {
   error?: string;
 }
 
+// Extensão do tipo Message para incluir attachments
+interface MessageWithAttachments extends Message {
+  attachments?: ChatAttachment[];
+}
+
 export function useChat({ conversationId, onConversationCreated }: UseChatOptions) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -24,19 +30,20 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
   const queryClient = useQueryClient();
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim() || isStreaming) return;
+    async (content: string, attachments: ChatAttachment[] = []) => {
+      if ((!content.trim() && attachments.length === 0) || isStreaming) return;
 
       setError(null);
       setIsStreaming(true);
       setStreamingContent("");
 
       // Add user message to UI immediately
-      const tempUserMessage: Message = {
+      const tempUserMessage: MessageWithAttachments = {
         id: `temp-${Date.now()}`,
         conversation_id: conversationId || "",
         role: "USER",
         content,
+        attachments,
         created_at: new Date().toISOString(),
       };
 
@@ -44,7 +51,7 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
       if (conversationId) {
         queryClient.setQueryData(
           ["conversation", conversationId],
-          (old: { conversation: unknown; messages: Message[] } | undefined) => {
+          (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
             if (!old) return old;
             return {
               ...old,
@@ -55,18 +62,19 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
       }
 
       // Add placeholder for assistant message
-      const tempAssistantMessage: Message = {
+      const tempAssistantMessage: MessageWithAttachments = {
         id: `temp-assistant-${Date.now()}`,
         conversation_id: conversationId || "",
         role: "ASSISTANT",
         content: "",
+        attachments: [],
         created_at: new Date().toISOString(),
       };
 
       if (conversationId) {
         queryClient.setQueryData(
           ["conversation", conversationId],
-          (old: { conversation: unknown; messages: Message[] } | undefined) => {
+          (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
             if (!old) return old;
             return {
               ...old,
@@ -85,6 +93,7 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
           body: JSON.stringify({
             ...(conversationId && { conversationId }),
             message: content,
+            attachments,
           }),
           signal: abortControllerRef.current.signal,
         });
@@ -122,7 +131,7 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
                   if (currentConvId) {
                     queryClient.setQueryData(
                       ["conversation", currentConvId],
-                      (old: { conversation: unknown; messages: Message[] } | undefined) => {
+                      (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
                         if (!old) return old;
                         const messages = [...old.messages];
                         const lastIndex = messages.length - 1;
