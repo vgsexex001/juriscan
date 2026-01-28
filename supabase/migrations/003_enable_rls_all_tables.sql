@@ -2,8 +2,25 @@
 -- Migração: Garantir RLS em TODAS as tabelas
 -- ===========================================
 
+-- Garantir extensão UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- ===========================================
--- 1. Habilitar RLS em tabelas que podem estar faltando
+-- 1. Criar tabela processed_webhook_events (se não existir)
+-- ===========================================
+
+CREATE TABLE IF NOT EXISTS public.processed_webhook_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  stripe_event_id TEXT UNIQUE NOT NULL,
+  event_type TEXT NOT NULL,
+  processed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_processed_webhook_events_stripe_id
+  ON public.processed_webhook_events(stripe_event_id);
+
+-- ===========================================
+-- 2. Habilitar RLS em tabelas que podem estar faltando
 -- ===========================================
 
 -- processed_webhook_events - tabela de idempotência do Stripe
@@ -12,6 +29,7 @@ ALTER TABLE public.processed_webhook_events ENABLE ROW LEVEL SECURITY;
 
 -- Política: Ninguém pode acessar via client (apenas service role)
 -- O service role bypassa RLS por padrão
+DROP POLICY IF EXISTS "No client access to webhook events" ON public.processed_webhook_events;
 CREATE POLICY "No client access to webhook events"
   ON public.processed_webhook_events FOR ALL
   USING (false);
