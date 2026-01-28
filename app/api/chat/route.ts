@@ -57,8 +57,15 @@ function buildMessageContent(
 
   for (const att of attachments) {
     if (att.type === "file" && att.metadata.extracted_text) {
+      console.log(
+        `📄 Including document "${att.name}" with ${att.metadata.extracted_text.length} chars`
+      );
       contextParts.push(
-        `[Conteúdo do documento "${att.name}"]:\n${att.metadata.extracted_text.substring(0, 3000)}`
+        `[Conteúdo do documento "${att.name}"]:\n${att.metadata.extracted_text}`
+      );
+    } else if (att.type === "file") {
+      console.log(
+        `⚠️ Document "${att.name}" has no extracted_text in metadata`
       );
     }
 

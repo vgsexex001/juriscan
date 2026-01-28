@@ -6,6 +6,7 @@ import {
   type ChatAttachment,
   type AttachmentMetadata,
 } from "@/types/chat";
+import { extractTextFromFile, truncateText } from "@/lib/document/extractor";
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = "force-dynamic";
@@ -101,11 +102,27 @@ export async function POST(request: NextRequest) {
     // Extrair metadados baseados no tipo
     const metadata: AttachmentMetadata = {};
 
-    // TODO: Para PDFs, extrair texto usando pdf-parse
-    // if (attachmentType === 'file' && file.type === 'application/pdf') {
-    //   const pdfText = await extractPdfText(file);
-    //   metadata.extracted_text = pdfText.substring(0, 5000); // Limitar a 5000 chars
-    // }
+    // Extrair texto de documentos (PDF, DOCX, TXT)
+    if (attachmentType === "file") {
+      try {
+        console.log(`📄 Extracting text from: ${file.name} (${file.type})`);
+        const { text, pageCount } = await extractTextFromFile(file);
+
+        if (text && text.length > 0) {
+          // Limitar a 10000 caracteres para não sobrecarregar o contexto
+          metadata.extracted_text = truncateText(text, 10000);
+          metadata.pages = pageCount;
+          console.log(
+            `📝 Extracted ${text.length} chars from ${file.name}, truncated to ${metadata.extracted_text.length}`
+          );
+        } else {
+          console.log(`⚠️ No text extracted from ${file.name}`);
+        }
+      } catch (extractError) {
+        console.error(`❌ Text extraction failed for ${file.name}:`, extractError);
+        // Continua sem texto extraído - não bloqueia o upload
+      }
+    }
 
     // Montar resposta
     const attachment: ChatAttachment = {
