@@ -36,6 +36,7 @@ export default function AudioRecorder({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { permission, error: permissionError, requestPermission } = useMicrophonePermission();
+  const hasAutoStartedRef = useRef(false);
 
   const {
     isRecording,
@@ -74,6 +75,22 @@ export default function AudioRecorder({
     setShowPermissionError(false);
     await startRecording();
   }, [disabled, permission, requestPermission, startRecording]);
+
+  // Auto-start recording when component mounts (for tap mode)
+  useEffect(() => {
+    if (
+      mode === "tap" &&
+      isSupported &&
+      !hasAutoStartedRef.current &&
+      !isRecording &&
+      !audioBlob &&
+      !disabled
+    ) {
+      hasAutoStartedRef.current = true;
+      console.log("🎤 Auto-starting recording in tap mode...");
+      handleStartRecording();
+    }
+  }, [mode, isSupported, isRecording, audioBlob, disabled, handleStartRecording]);
 
   // Hold mode handlers
   const handlePointerDown = useCallback(
@@ -126,22 +143,6 @@ export default function AudioRecorder({
     },
     [mode, isCancelling, isRecording, cancelRecording, stopRecording, onCancel]
   );
-
-  // Tap mode handlers
-  const handleTapClick = useCallback(async () => {
-    if (mode !== "tap" || disabled) return;
-
-    if (audioBlob) {
-      // Already have a recording, do nothing (handled by preview)
-      return;
-    }
-
-    if (isRecording) {
-      stopRecording();
-    } else {
-      await handleStartRecording();
-    }
-  }, [mode, disabled, audioBlob, isRecording, stopRecording, handleStartRecording]);
 
   // Handle recording complete
   const handleConfirmRecording = useCallback(() => {
@@ -369,18 +370,23 @@ export default function AudioRecorder({
     );
   }
 
-  // Idle state - show record button
+  // Idle state for tap mode - show loading since it auto-starts
   if (mode === "tap") {
     return (
-      <button
-        onClick={handleTapClick}
-        disabled={disabled}
-        className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed rounded-full transition-colors"
-        aria-label="Gravar áudio"
-        title="Clique para gravar"
-      >
-        <Mic className="w-5 h-5" />
-      </button>
+      <div className="flex items-center gap-3 px-4 py-2 bg-purple-50 rounded-full border border-purple-200">
+        <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
+        <span className="text-sm text-purple-700">Iniciando gravação...</span>
+        <button
+          onClick={() => {
+            resetRecording();
+            onCancel();
+          }}
+          className="ml-auto p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+          aria-label="Cancelar"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
     );
   }
 
