@@ -14,7 +14,7 @@ const createReportSchema = z.object({
     "CUSTOM",
   ]),
   title: z.string().min(1).max(200),
-  parameters: z.record(z.unknown()),
+  parameters: z.record(z.string(), z.any()),
 });
 
 // GET /api/reports - List user's reports

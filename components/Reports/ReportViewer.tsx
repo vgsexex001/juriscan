@@ -39,6 +39,160 @@ export default function ReportViewer({
     });
   };
 
+  const handleExport = () => {
+    if (!result) return;
+
+    let textContent = "";
+    const divider = "═".repeat(60);
+    const subDivider = "─".repeat(60);
+
+    // Header
+    textContent += `${divider}\n`;
+    textContent += `JURISCAN - RELATÓRIO ESTRATÉGICO\n`;
+    textContent += `${divider}\n\n`;
+    textContent += `Título: ${report.title}\n`;
+    textContent += `Tipo: ${REPORT_TYPE_INFO[report.type]?.label}\n`;
+    textContent += `Data de Geração: ${formatDate(report.generated_at || report.created_at)}\n`;
+    textContent += `\n${subDivider}\n\n`;
+
+    // Content based on type
+    if (report.type === "PREDICTIVE_ANALYSIS") {
+      const data = result as PredictiveAnalysisResult;
+      textContent += `ANÁLISE PREDITIVA\n\n`;
+      textContent += `Probabilidade de Êxito: ${data.probabilidade_exito}%\n`;
+      textContent += `Nível de Confiança: ${data.confianca.toUpperCase()}\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `RESUMO EXECUTIVO\n${subDivider}\n`;
+      textContent += `${data.resumo_executivo}\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `FATORES FAVORÁVEIS\n${subDivider}\n`;
+      data.fatores_favoraveis.forEach((f, i) => {
+        textContent += `${i + 1}. ${f}\n`;
+      });
+      textContent += `\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `FATORES DESFAVORÁVEIS\n${subDivider}\n`;
+      data.fatores_desfavoraveis.forEach((f, i) => {
+        textContent += `${i + 1}. ${f}\n`;
+      });
+      textContent += `\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `RECOMENDAÇÕES ESTRATÉGICAS\n${subDivider}\n`;
+      data.recomendacoes.forEach((r, i) => {
+        textContent += `${i + 1}. ${r}\n`;
+      });
+      textContent += `\n`;
+
+      if (data.jurisprudencia.length > 0) {
+        textContent += `${subDivider}\n`;
+        textContent += `JURISPRUDÊNCIA RELEVANTE\n${subDivider}\n`;
+        data.jurisprudencia.forEach((j) => {
+          textContent += `• ${j.tribunal} - ${j.numero}\n`;
+          textContent += `  ${j.resumo}\n\n`;
+        });
+      }
+
+      if (data.riscos.length > 0) {
+        textContent += `${subDivider}\n`;
+        textContent += `RISCOS IDENTIFICADOS\n${subDivider}\n`;
+        data.riscos.forEach((r, i) => {
+          textContent += `${i + 1}. ${r}\n`;
+        });
+      }
+    } else if (report.type === "JURIMETRICS") {
+      const data = result as JurimetricsResult;
+      textContent += `ANÁLISE DE JURIMETRIA\n\n`;
+      textContent += `Tribunal: ${data.tribunal}\n`;
+      textContent += `Período: ${data.periodo_analise.inicio} a ${data.periodo_analise.fim}\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `ESTATÍSTICAS\n${subDivider}\n`;
+      textContent += `Volume Total de Processos: ${data.volume_total.toLocaleString()}\n`;
+      textContent += `Taxa de Procedência: ${data.taxa_procedencia}%\n`;
+      textContent += `Taxa de Improcedência: ${data.taxa_improcedencia}%\n`;
+      textContent += `Taxa Parcial: ${data.taxa_parcial}%\n`;
+      textContent += `Taxa de Acordo: ${data.taxa_acordo}%\n`;
+      textContent += `Tempo Médio até Sentença: ${data.tempo_medio_sentenca_dias} dias\n`;
+      textContent += `Tempo Médio até Trânsito: ${data.tempo_medio_transito_dias} dias\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `COMPARATIVO NACIONAL\n${subDivider}\n`;
+      textContent += `${data.comparativo_nacional.acima_media ? "Acima" : "Abaixo"} da média nacional\n`;
+      textContent += `Diferença: ${data.comparativo_nacional.diferenca_percentual > 0 ? "+" : ""}${data.comparativo_nacional.diferenca_percentual}%\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `TENDÊNCIAS\n${subDivider}\n`;
+      data.tendencias.forEach((t, i) => {
+        textContent += `${i + 1}. ${t}\n`;
+      });
+      textContent += `\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `INSIGHTS\n${subDivider}\n`;
+      data.insights.forEach((ins, i) => {
+        textContent += `${i + 1}. ${ins}\n`;
+      });
+    } else if (report.type === "RELATOR_PROFILE") {
+      const data = result as JudgeProfileResult;
+      textContent += `PERFIL DO MAGISTRADO\n\n`;
+      textContent += `Nome: ${data.magistrado.nome}\n`;
+      textContent += `Tribunal: ${data.magistrado.tribunal}\n`;
+      textContent += `Vara/Câmara: ${data.magistrado.vara_camara}\n`;
+      textContent += `Tempo de Atuação: ${data.magistrado.tempo_atuacao_anos} anos\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `ESTATÍSTICAS\n${subDivider}\n`;
+      textContent += `Total de Decisões: ${data.estatisticas.total_decisoes}\n`;
+      textContent += `Taxa de Procedência: ${data.estatisticas.taxa_procedencia}%\n`;
+      textContent += `Taxa de Reforma: ${data.estatisticas.taxa_reforma}%\n`;
+      textContent += `Tempo Médio para Decisão: ${data.estatisticas.tempo_medio_decisao_dias} dias\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `TENDÊNCIA\n${subDivider}\n`;
+      const favoreceLabel = data.tendencias.favorece === "autor" ? "Autor" :
+                           data.tendencias.favorece === "reu" ? "Réu" : "Neutro";
+      textContent += `Favorece: ${favoreceLabel}\n`;
+      textContent += `Intensidade: ${data.tendencias.intensidade}\n\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `TIPOS DE CASO MAIS FREQUENTES\n${subDivider}\n`;
+      data.tipos_caso_frequentes.forEach((t) => {
+        textContent += `• ${t.tipo}: ${t.percentual}%\n`;
+      });
+      textContent += `\n`;
+
+      textContent += `${subDivider}\n`;
+      textContent += `RECOMENDAÇÕES ESTRATÉGICAS\n${subDivider}\n`;
+      data.recomendacoes_estrategicas.forEach((r, i) => {
+        textContent += `${i + 1}. ${r}\n`;
+      });
+    }
+
+    // Footer
+    textContent += `\n${divider}\n`;
+    textContent += `AVISO LEGAL\n`;
+    textContent += `${divider}\n`;
+    textContent += `Esta análise é baseada em padrões estatísticos e jurisprudência\n`;
+    textContent += `histórica. Não constitui garantia de resultado nem substitui\n`;
+    textContent += `parecer jurídico profissional.\n\n`;
+    textContent += `Gerado por Juriscan - ${new Date().toLocaleDateString("pt-BR")}\n`;
+
+    // Create and download file
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${report.title.replace(/[^a-zA-Z0-9]/g, "_")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const renderPredictiveResult = (data: PredictiveAnalysisResult) => (
     <div className="space-y-6">
       {/* Probability */}
@@ -375,7 +529,10 @@ export default function ReportViewer({
           </div>
           <div className="flex items-center gap-2">
             {report.status === "COMPLETED" && (
-              <button className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+              >
                 <Download className="w-4 h-4" />
                 Exportar
               </button>

@@ -1,69 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Eye,
-  EyeOff,
-  Copy,
-  AlertTriangle,
-  Monitor,
-  Smartphone,
-  Check,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, Check, AlertCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-interface Session {
-  id: string;
-  device: string;
-  deviceType: "desktop" | "mobile";
-  location: string;
-  lastActive: string;
-  isCurrent: boolean;
-}
-
-const mockSessions: Session[] = [
-  {
-    id: "1",
-    device: "Chrome - Windows",
-    deviceType: "desktop",
-    location: "São Paulo, SP",
-    lastActive: "Agora",
-    isCurrent: true,
-  },
-  {
-    id: "2",
-    device: "Safari - iPhone",
-    deviceType: "mobile",
-    location: "São Paulo, SP",
-    lastActive: "Há 2 horas",
-    isCurrent: false,
-  },
-  {
-    id: "3",
-    device: "Firefox - MacOS",
-    deviceType: "desktop",
-    location: "Rio de Janeiro, RJ",
-    lastActive: "Há 1 dia",
-    isCurrent: false,
-  },
-];
-
-const mockApiKey = "jsk_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6";
-
-interface SecuritySettingsProps {
-  onPasswordChange?: (data: {
-    currentPassword: string;
-    newPassword: string;
-  }) => void;
-  onRevokeApiKey?: () => void;
-  onEndSession?: (sessionId: string) => void;
-}
-
-export default function SecuritySettings({
-  onPasswordChange,
-  onRevokeApiKey,
-  onEndSession,
-}: SecuritySettingsProps) {
-  // Password state
+export default function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -71,71 +12,93 @@ export default function SecuritySettings({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  // API Key state
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // Sessions state
-  const [sessions, setSessions] = useState<Session[]>(mockSessions);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null);
+
+    // Validation
+    if (newPassword.length < 6) {
+      setMessage({ type: "error", text: "A nova senha deve ter pelo menos 6 caracteres" });
+      return;
+    }
 
     if (newPassword !== confirmPassword) {
-      alert("As senhas não coincidem");
+      setMessage({ type: "error", text: "As senhas não coincidem" });
       return;
     }
 
     setIsChangingPassword(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const supabase = createClient();
 
-    onPasswordChange?.({ currentPassword, newPassword });
+      // Update password using Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
-    // Reset form
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setIsChangingPassword(false);
-  };
+      if (error) {
+        throw error;
+      }
 
-  const handleCopyApiKey = async () => {
-    await navigator.clipboard.writeText(mockApiKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleRevokeApiKey = () => {
-    if (
-      confirm(
-        "Tem certeza que deseja revogar esta chave API? Isso invalidará todas as integrações existentes."
-      )
-    ) {
-      onRevokeApiKey?.();
+      // Reset form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage({ type: "success", text: "Senha atualizada com sucesso!" });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Erro ao atualizar senha",
+      });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
-  const handleEndSession = (sessionId: string) => {
-    setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-    onEndSession?.(sessionId);
-  };
-
-  const maskedApiKey = showApiKey
-    ? mockApiKey
-    : mockApiKey.slice(0, 8) + "••••••••••••••••••••••••";
-
   return (
-    <div className="space-y-8">
-      <h2 className="text-lg font-semibold text-gray-800">
-        Segurança da Conta
-      </h2>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+          <Shield className="w-5 h-5 text-blue-600" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">
+            Segurança da Conta
+          </h2>
+          <p className="text-sm text-gray-500">
+            Gerencie sua senha e configurações de segurança
+          </p>
+        </div>
+      </div>
+
+      {/* Message */}
+      {message && (
+        <div
+          className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+            message.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <AlertCircle className="w-4 h-4" />
+          )}
+          {message.text}
+        </div>
+      )}
 
       {/* Password Section */}
-      <div className="p-5 bg-gray-50 rounded-xl">
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-sm font-semibold text-gray-800 mb-4">
-          Senha e Autenticação
+          Alterar Senha
         </h3>
 
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -154,7 +117,7 @@ export default function SecuritySettings({
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white"
+                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
@@ -185,7 +148,7 @@ export default function SecuritySettings({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white"
+                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
@@ -199,6 +162,7 @@ export default function SecuritySettings({
                 )}
               </button>
             </div>
+            <p className="text-xs text-gray-400 mt-1">Mínimo de 6 caracteres</p>
           </div>
 
           {/* Confirm Password */}
@@ -216,7 +180,7 @@ export default function SecuritySettings({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-10 px-3 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white"
+                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
@@ -240,133 +204,26 @@ export default function SecuritySettings({
               !newPassword ||
               !confirmPassword
             }
-            className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {isChangingPassword ? "Atualizando..." : "Atualizar senha"}
+            {isChangingPassword ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Atualizando...
+              </>
+            ) : (
+              "Atualizar senha"
+            )}
           </button>
         </form>
       </div>
 
-      {/* API Key Section */}
-      <div className="p-5 bg-gray-50 rounded-xl">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-800">Chave API</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Use esta chave para integrações externas
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
-          <code className="flex-1 text-sm text-gray-700 font-mono truncate">
-            {maskedApiKey}
-          </code>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowApiKey(!showApiKey)}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title={showApiKey ? "Ocultar chave" : "Mostrar chave"}
-            >
-              {showApiKey ? (
-                <EyeOff className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </button>
-
-            <button
-              onClick={handleCopyApiKey}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Copiar chave"
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-green-500" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <button
-          onClick={handleRevokeApiKey}
-          className="mt-4 flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <AlertTriangle className="w-4 h-4" />
-          Revogar chave
-        </button>
-      </div>
-
-      {/* Sessions Section */}
-      <div className="p-5 bg-gray-50 rounded-xl">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-800">
-            Sessões Ativas
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Gerencie seus dispositivos conectados
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  {session.deviceType === "desktop" ? (
-                    <Monitor className="w-5 h-5 text-gray-500" />
-                  ) : (
-                    <Smartphone className="w-5 h-5 text-gray-500" />
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-800">
-                      {session.device}
-                    </p>
-                    {session.isCurrent && (
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                        Sessão atual
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {session.location} • {session.lastActive}
-                  </p>
-                </div>
-              </div>
-
-              {!session.isCurrent && (
-                <button
-                  onClick={() => handleEndSession(session.id)}
-                  className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  Encerrar
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {sessions.filter((s) => !s.isCurrent).length > 0 && (
-          <button
-            onClick={() => {
-              setSessions((prev) => prev.filter((s) => s.isCurrent));
-              sessions
-                .filter((s) => !s.isCurrent)
-                .forEach((s) => onEndSession?.(s.id));
-            }}
-            className="mt-4 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
-          >
-            Encerrar todas as outras sessões
-          </button>
-        )}
+      {/* Info about other security features */}
+      <div className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+        <p className="text-sm text-gray-500">
+          Funcionalidades adicionais de segurança como autenticação de dois fatores
+          e gerenciamento de sessões estarão disponíveis em breve.
+        </p>
       </div>
     </div>
   );

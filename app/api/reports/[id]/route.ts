@@ -5,19 +5,15 @@ import { REPORT_COSTS } from "@/types/reports";
 import { z } from "zod";
 import type { ReportType } from "@/types/reports";
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
 // Schema for generating a report
 const generateReportSchema = z.object({
   action: z.literal("generate"),
 });
 
 // GET /api/reports/:id - Get a specific report
-export const GET = apiHandler(async (_request, { user }, context: RouteContext) => {
+export const GET = apiHandler(async (_request, { params, user }) => {
   const supabase = await createServerSupabaseClient();
-  const { id } = await context.params;
+  const id = params.id;
 
   const { data, error } = await getReport(supabase, user!.id, id);
 
@@ -29,9 +25,9 @@ export const GET = apiHandler(async (_request, { user }, context: RouteContext) 
 });
 
 // POST /api/reports/:id - Generate report content
-export const POST = apiHandler(async (request, { user }, context: RouteContext) => {
+export const POST = apiHandler(async (request, { params, user }) => {
   const supabase = await createServerSupabaseClient();
-  const { id } = await context.params;
+  const id = params.id;
 
   await parseBody(request, generateReportSchema);
 
@@ -54,9 +50,9 @@ export const POST = apiHandler(async (request, { user }, context: RouteContext) 
 });
 
 // DELETE /api/reports/:id - Delete a report
-export const DELETE = apiHandler(async (_request, { user }, context: RouteContext) => {
+export const DELETE = apiHandler(async (_request, { params, user }) => {
   const supabase = await createServerSupabaseClient();
-  const { id } = await context.params;
+  const id = params.id;
 
   const { error } = await deleteReport(supabase, user!.id, id);
 

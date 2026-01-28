@@ -1,59 +1,103 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, Phone, Building, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, Phone, Building, Save, Loader2 } from "lucide-react";
+import { useProfile } from "@/hooks/useProfile";
 
-interface ProfileData {
-  nomeCompleto: string;
+interface ProfileFormData {
+  name: string;
   oab: string;
   email: string;
-  telefone: string;
-  escritorio: string;
-  areasAtuacao: string;
+  phone: string;
+  law_firm: string;
+  practice_areas: string;
 }
 
-interface ProfileSettingsProps {
-  initialData?: ProfileData;
-  onSave?: (data: ProfileData) => void;
-  onCancel?: () => void;
-}
+export default function ProfileSettings() {
+  const { profile, isLoading, updateProfile, isUpdating } = useProfile();
+  const [formData, setFormData] = useState<ProfileFormData>({
+    name: "",
+    oab: "",
+    email: "",
+    phone: "",
+    law_firm: "",
+    practice_areas: "",
+  });
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-const defaultData: ProfileData = {
-  nomeCompleto: "Advogado Demo",
-  oab: "SP 123.456",
-  email: "advogado@email.com",
-  telefone: "(11) 99999-9999",
-  escritorio: "Silva & Associados Advocacia",
-  areasAtuacao: "Cível, Trabalhista, Tributário",
-};
+  // Populate form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        oab: profile.oab || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        law_firm: profile.law_firm || "",
+        practice_areas: profile.practice_areas?.join(", ") || "",
+      });
+    }
+  }, [profile]);
 
-export default function ProfileSettings({
-  initialData = defaultData,
-  onSave,
-  onCancel,
-}: ProfileSettingsProps) {
-  const [formData, setFormData] = useState<ProfileData>(initialData);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleChange = (field: keyof ProfileData, value: string) => {
+  const handleChange = (field: keyof ProfileFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setSaveMessage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
+    setSaveMessage(null);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    onSave?.(formData);
-    setIsSaving(false);
+    try {
+      await updateProfile({
+        name: formData.name,
+        oab: formData.oab || undefined,
+        phone: formData.phone || undefined,
+        law_firm: formData.law_firm || undefined,
+        practice_areas: formData.practice_areas
+          ? formData.practice_areas.split(",").map((s) => s.trim()).filter(Boolean)
+          : undefined,
+      });
+      setSaveMessage({ type: "success", text: "Perfil atualizado com sucesso!" });
+    } catch (error) {
+      setSaveMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Erro ao salvar perfil",
+      });
+    }
   };
 
-  const handleCancel = () => {
-    setFormData(initialData);
-    onCancel?.();
+  const handleReset = () => {
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        oab: profile.oab || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        law_firm: profile.law_firm || "",
+        practice_areas: profile.practice_areas?.join(", ") || "",
+      });
+    }
+    setSaveMessage(null);
   };
+
+  // Get initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -64,17 +108,26 @@ export default function ProfileSettings({
       {/* Avatar Section */}
       <div className="flex items-center gap-4 mb-6">
         <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-semibold">
-          AD
+          {getInitials(formData.name || "U")}
         </div>
-        <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            Alterar foto
-          </button>
-          <button className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
-            Remover
-          </button>
+        <div>
+          <p className="text-sm font-medium text-gray-800">{formData.name || "Usuário"}</p>
+          <p className="text-sm text-gray-500">{formData.email}</p>
         </div>
       </div>
+
+      {/* Save Message */}
+      {saveMessage && (
+        <div
+          className={`mb-4 p-3 rounded-lg text-sm ${
+            saveMessage.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {saveMessage.text}
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} aria-label="Formulário de perfil">
@@ -82,18 +135,18 @@ export default function ProfileSettings({
           {/* Nome Completo */}
           <div>
             <label
-              htmlFor="nomeCompleto"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Nome completo
             </label>
             <input
-              id="nomeCompleto"
+              id="name"
               type="text"
-              value={formData.nomeCompleto}
-              onChange={(e) => handleChange("nomeCompleto", e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Seu nome completo"
-              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-primary"
             />
           </div>
 
@@ -111,11 +164,11 @@ export default function ProfileSettings({
               value={formData.oab}
               onChange={(e) => handleChange("oab", e.target.value)}
               placeholder="UF 000.000"
-              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-primary"
             />
           </div>
 
-          {/* Email */}
+          {/* Email (Read-only) */}
           <div>
             <label
               htmlFor="email"
@@ -129,17 +182,19 @@ export default function ProfileSettings({
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-                placeholder="seu@email.com"
-                className="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+                disabled
+                className="w-full h-11 pl-11 pr-4 bg-gray-50 border border-gray-200 rounded-[10px] text-sm text-gray-500 cursor-not-allowed"
               />
             </div>
+            <p className="text-xs text-gray-400 mt-1">
+              O e-mail não pode ser alterado
+            </p>
           </div>
 
           {/* Telefone */}
           <div>
             <label
-              htmlFor="telefone"
+              htmlFor="phone"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Telefone
@@ -147,12 +202,12 @@ export default function ProfileSettings({
             <div className="relative">
               <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400" />
               <input
-                id="telefone"
+                id="phone"
                 type="tel"
-                value={formData.telefone}
-                onChange={(e) => handleChange("telefone", e.target.value)}
+                value={formData.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
                 placeholder="(00) 00000-0000"
-                className="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+                className="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -160,7 +215,7 @@ export default function ProfileSettings({
           {/* Escritório */}
           <div className="md:col-span-2">
             <label
-              htmlFor="escritorio"
+              htmlFor="law_firm"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Escritório/Empresa
@@ -168,12 +223,12 @@ export default function ProfileSettings({
             <div className="relative">
               <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400" />
               <input
-                id="escritorio"
+                id="law_firm"
                 type="text"
-                value={formData.escritorio}
-                onChange={(e) => handleChange("escritorio", e.target.value)}
+                value={formData.law_firm}
+                onChange={(e) => handleChange("law_firm", e.target.value)}
                 placeholder="Nome do escritório"
-                className="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+                className="w-full h-11 pl-11 pr-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -181,18 +236,18 @@ export default function ProfileSettings({
           {/* Áreas de Atuação */}
           <div className="md:col-span-2">
             <label
-              htmlFor="areasAtuacao"
+              htmlFor="practice_areas"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Áreas de atuação
             </label>
             <input
-              id="areasAtuacao"
+              id="practice_areas"
               type="text"
-              value={formData.areasAtuacao}
-              onChange={(e) => handleChange("areasAtuacao", e.target.value)}
+              value={formData.practice_areas}
+              onChange={(e) => handleChange("practice_areas", e.target.value)}
               placeholder="Ex: Cível, Trabalhista, Tributário"
-              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-blue-500"
+              className="w-full h-11 px-4 bg-white border border-gray-200 rounded-[10px] text-sm text-gray-800 focus:outline-none focus:border-primary"
             />
             <p className="text-xs text-gray-400 mt-1.5">
               Separe as áreas por vírgula
@@ -204,18 +259,22 @@ export default function ProfileSettings({
         <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={handleReset}
             className="px-5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isUpdating}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-lg text-sm font-medium text-white transition-colors"
           >
-            <Save className="w-4 h-4" />
-            {isSaving ? "Salvando..." : "Salvar alterações"}
+            {isUpdating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {isUpdating ? "Salvando..." : "Salvar alterações"}
           </button>
         </div>
       </form>

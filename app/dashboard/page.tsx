@@ -4,162 +4,25 @@ import {
   Menu,
   Scale,
   MessageSquare,
-  BarChart3,
-  Target,
-  Briefcase,
-  FileText,
+  CreditCard,
+  History,
+  Sparkles,
+  ArrowRight,
+  BookOpen,
+  Zap,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-import MetricCard from "@/components/MetricCard";
-import MemoryCard from "@/components/MemoryCard";
-import PriorityActions from "@/components/PriorityActions";
-import TribunalChart from "@/components/TribunalChart";
-import QuickActions from "@/components/QuickActions";
-import AnalysesTable from "@/components/AnalysesTable";
 import LegalDisclaimer from "@/components/LegalDisclaimer";
-
-// Data for metrics cards
-const metricsData = [
-  {
-    icon: BarChart3,
-    iconBackground: "#EEF2FF",
-    iconColor: "#1C398E",
-    value: "156",
-    label: "Análises Estratégicas",
-    trend: { value: "+12%", direction: "up" as const, color: "#10B981" },
-  },
-  {
-    icon: Target,
-    iconBackground: "#FEF3C7",
-    iconColor: "#D97706",
-    value: "68%",
-    label: "Taxa de Êxito Média",
-    trend: { value: "+5%", direction: "up" as const, color: "#10B981" },
-  },
-  {
-    icon: Briefcase,
-    iconBackground: "#DCFCE7",
-    iconColor: "#16A34A",
-    value: "42",
-    label: "Processos Ativos",
-    trend: { value: "-3", direction: "down" as const, color: "#6B7280" },
-  },
-  {
-    icon: FileText,
-    iconBackground: "#F3E8FF",
-    iconColor: "#9333EA",
-    value: "89",
-    label: "Relatórios Estratégicos",
-    trend: { value: "+18", direction: "up" as const, color: "#10B981" },
-  },
-];
-
-// Data for memory card
-const memoryMetrics = [
-  {
-    value: "124",
-    label: "Casos analisados",
-    sublabel: "Base de conhecimento em evolução",
-  },
-  {
-    value: "89%",
-    label: "Previsões positivas",
-    sublabel: "Variação de +12% em 30 dias",
-  },
-  {
-    value: "342",
-    label: "Padrões identificados",
-    sublabel: "Insights jurisprudenciais ativos",
-  },
-];
-
-// Data for priority actions
-const priorityActionsData = [
-  {
-    type: "high" as const,
-    badge: { text: "Alta", background: "#FEE2E2", color: "#DC2626" },
-    title: "3 processos com alta probabilidade de êxito",
-    description: "Priorize recursos para maximizar resultados",
-    actionText: "Revisar estratégia →",
-    indicatorColor: "#DC2626",
-  },
-  {
-    type: "medium" as const,
-    badge: { text: "Alta", background: "#FEE2E2", color: "#DC2626" },
-    title: "2 prazos processuais próximos",
-    description: "Ação necessária na próxima 48 horas",
-    actionText: "Ver detalhes →",
-    indicatorColor: "#F59E0B",
-  },
-  {
-    type: "info" as const,
-    badge: { text: "Média", background: "#FEF3C7", color: "#D97706" },
-    title: "Nova jurisprudência identificada",
-    description: "10 precedentes favoráveis no TJSP",
-    actionText: "Analisar impacto →",
-    indicatorColor: "#3B82F6",
-  },
-];
-
-// Data for tribunal chart
-const tribunalData = [
-  { label: "TJSP", value: 85, color: "#1C398E" },
-  { label: "TJRJ", value: 72, color: "#1C398E" },
-  { label: "TJMG", value: 68, color: "#1C398E" },
-  { label: "TJRS", value: 61, color: "#1C398E" },
-  { label: "TJPR", value: 54, color: "#1C398E" },
-];
-
-// Data for analyses table
-const analysesData = [
-  {
-    processo: { number: "0001234-56.2024", sub: "8.26.0100" },
-    tipo: "Ação de Cobrança",
-    tribunal: { badge: "TJSP", color: "#1C398E" },
-    predicao: { value: "72%", percentage: 72, color: "#10B981" },
-    prioridade: { badge: "Alta", background: "#FEE2E2", color: "#DC2626" },
-    status: {
-      badge: "Concluído",
-      background: "#DCFCE7",
-      color: "#16A34A",
-      type: "completed" as const,
-    },
-    actionText: "Ver estratégia →",
-  },
-  {
-    processo: { number: "0087688-12.2024", sub: "8.19.0001" },
-    tipo: "Rescisão Contratual",
-    tribunal: { badge: "TJRJ", color: "#7C3AED" },
-    predicao: { value: "61%", percentage: 61, color: "#F59E0B" },
-    prioridade: { badge: "Média", background: "#FEF3C7", color: "#D97706" },
-    status: {
-      badge: "Processando",
-      background: "#DBEAFE",
-      color: "#2563EB",
-      type: "processing" as const,
-    },
-    actionText: "Ver status →",
-  },
-  {
-    processo: { number: "0056078-90.2024", sub: "8.13.0024" },
-    tipo: "Revisional de Aluguel",
-    tribunal: { badge: "TJMG", color: "#059669" },
-    predicao: { value: "55%", percentage: 55, color: "#F59E0B" },
-    prioridade: { badge: "Baixa", background: "#F3F4F6", color: "#6B7280" },
-    status: {
-      badge: "Concluído",
-      background: "#DCFCE7",
-      color: "#16A34A",
-      type: "completed" as const,
-    },
-    actionText: "Ver resultado →",
-  },
-];
+import { useCredits } from "@/hooks/useCredits";
+import { useConversations } from "@/hooks/useConversations";
 
 export default function DashboardPage() {
-  // Modal de termos agora é gerenciado globalmente em lib/providers.tsx (TermsGate)
-  // Tour é iniciado automaticamente após aceitar termos
+  const { balance, isLoading: creditsLoading } = useCredits();
+  const { conversations, isLoading: convsLoading } = useConversations();
+
+  const activeConversations = conversations.filter(c => c.status === "ACTIVE").length;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -187,10 +50,10 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                Painel de Decisão Estratégica
+                Bem-vindo ao Juriscan
               </h1>
               <p className="text-sm text-gray-500 mt-1">
-                Visão executiva com ações priorizadas
+                Seu assistente jurídico com inteligência artificial
               </p>
             </div>
             <Link
@@ -198,31 +61,137 @@ export default function DashboardPage() {
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
-              Consultar IA
+              Nova Consulta
             </Link>
           </div>
 
-          {/* Metrics Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {metricsData.map((metric, index) => (
-              <MetricCard key={index} {...metric} />
-            ))}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {/* Credits Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Créditos Disponíveis</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {creditsLoading ? "..." : balance}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/configuracoes?tab=plano"
+                className="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1"
+              >
+                Comprar mais créditos
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Conversations Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Conversas Ativas</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {convsLoading ? "..." : activeConversations}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/chat"
+                className="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1"
+              >
+                Ver conversas
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* History Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <History className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Histórico</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {convsLoading ? "..." : conversations.length}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/historico"
+                className="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1"
+              >
+                Ver histórico
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
 
-          {/* Memory Card */}
-          <MemoryCard metrics={memoryMetrics} />
-
-          {/* Priority Actions */}
-          <PriorityActions actions={priorityActionsData} />
-
-          {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <TribunalChart data={tribunalData} />
-            <QuickActions />
+          {/* Quick Start Section */}
+          <div className="bg-gradient-to-br from-primary to-blue-700 rounded-xl p-6 mb-8 text-white">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold mb-2">Comece sua análise jurídica</h2>
+                <p className="text-blue-100 mb-4">
+                  Faça perguntas sobre casos jurídicos, obtenha análises de probabilidade
+                  de êxito e receba orientações estratégicas baseadas em jurisprudência.
+                </p>
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-primary font-medium rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Iniciar Conversa
+                </Link>
+              </div>
+            </div>
           </div>
 
-          {/* Recent Analyses Table */}
-          <AnalysesTable analyses={analysesData} />
+          {/* Features Grid */}
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            O que o Juriscan pode fazer por você
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mb-3">
+                <Zap className="w-5 h-5 text-green-600" />
+              </div>
+              <h4 className="font-semibold text-gray-800 mb-1">Análise Rápida</h4>
+              <p className="text-sm text-gray-500">
+                Obtenha análises de probabilidade de êxito em segundos, baseadas em milhares de precedentes.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mb-3">
+                <BookOpen className="w-5 h-5 text-blue-600" />
+              </div>
+              <h4 className="font-semibold text-gray-800 mb-1">Pesquisa Jurídica</h4>
+              <p className="text-sm text-gray-500">
+                Encontre jurisprudência relevante e precedentes que fortalecem sua argumentação.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mb-3">
+                <Shield className="w-5 h-5 text-purple-600" />
+              </div>
+              <h4 className="font-semibold text-gray-800 mb-1">Estratégia Processual</h4>
+              <p className="text-sm text-gray-500">
+                Receba recomendações de estratégia baseadas no perfil do relator e histórico da vara.
+              </p>
+            </div>
+          </div>
 
           {/* Legal Disclaimer */}
           <LegalDisclaimer />

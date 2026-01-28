@@ -41,6 +41,8 @@ CREATE TABLE public.profiles (
   privacy_accepted_at TIMESTAMPTZ,
   marketing_consent BOOLEAN DEFAULT FALSE,
   analytics_consent BOOLEAN DEFAULT TRUE,
+  stripe_customer_id TEXT,
+  current_plan TEXT DEFAULT 'free',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
