@@ -43,9 +43,11 @@ export function useConversations() {
     queryFn: async () => {
       const response = await fetch("/api/conversations");
       if (!response.ok) {
-        throw new Error("Erro ao buscar conversas");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao buscar conversas");
       }
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
   });
 
@@ -59,10 +61,12 @@ export function useConversations() {
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao criar conversa");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao criar conversa");
       }
 
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -87,10 +91,12 @@ export function useConversations() {
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao atualizar conversa");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao atualizar conversa");
       }
 
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -105,10 +111,12 @@ export function useConversations() {
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao deletar conversa");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao deletar conversa");
       }
 
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
@@ -138,9 +146,11 @@ export function useConversation(conversationId: string | null) {
       if (!conversationId) throw new Error("No conversation ID");
       const response = await fetch(`/api/conversations/${conversationId}`);
       if (!response.ok) {
-        throw new Error("Erro ao buscar conversa");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao buscar conversa");
       }
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
     enabled: !!conversationId,
   });

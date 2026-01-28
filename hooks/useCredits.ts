@@ -43,9 +43,11 @@ export function useCredits() {
     queryFn: async () => {
       const response = await fetch("/api/credits");
       if (!response.ok) {
-        throw new Error("Erro ao buscar créditos");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao buscar créditos");
       }
-      return response.json();
+      const result = await response.json();
+      return result.data;
     },
   });
 
@@ -59,12 +61,12 @@ export function useCredits() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao criar checkout");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao criar checkout");
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const result = await response.json();
+      window.location.href = result.data.url;
     },
   });
 
@@ -78,12 +80,12 @@ export function useCredits() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao criar checkout");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao criar checkout");
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const result = await response.json();
+      window.location.href = result.data.url;
     },
   });
 
@@ -95,12 +97,12 @@ export function useCredits() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao abrir portal");
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao abrir portal");
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      const result = await response.json();
+      window.location.href = result.data.url;
     },
   });
 

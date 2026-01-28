@@ -91,7 +91,7 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Erro ao enviar mensagem");
+          throw new Error(errorData.error?.message || "Erro ao enviar mensagem");
         }
 
         const reader = response.body?.getReader();
