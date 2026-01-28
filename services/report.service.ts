@@ -203,17 +203,17 @@ export async function generateReport(
 
     switch (report.type) {
       case "PREDICTIVE_ANALYSIS":
-        prompt = buildPredictivePrompt(parameters as PredictiveAnalysisParams);
+        prompt = buildPredictivePrompt(parameters as unknown as PredictiveAnalysisParams);
         result = await generateWithAI<PredictiveAnalysisResult>(prompt);
         break;
 
       case "JURIMETRICS":
-        prompt = buildJurimetricsPrompt(parameters as JurimetricsParams);
+        prompt = buildJurimetricsPrompt(parameters as unknown as JurimetricsParams);
         result = await generateWithAI<JurimetricsResult>(prompt);
         break;
 
       case "RELATOR_PROFILE":
-        prompt = buildJudgeProfilePrompt(parameters as JudgeProfileParams);
+        prompt = buildJudgeProfilePrompt(parameters as unknown as JudgeProfileParams);
         result = await generateWithAI<JudgeProfileResult>(prompt);
         break;
 

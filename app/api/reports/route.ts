@@ -2,7 +2,7 @@ import { apiHandler, successResponse, parseBody } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { listReports, createReport } from "@/services/report.service";
 import { z } from "zod";
-import type { ReportType } from "@/types/reports";
+import type { ReportType, CreateReportInput } from "@/types/reports";
 
 // Schema for creating a report
 const createReportSchema = z.object({
@@ -50,7 +50,7 @@ export const POST = apiHandler(async (request, { user }) => {
   const { data, error } = await createReport(supabase, user!.id, {
     type: input.type,
     title: input.title,
-    parameters: input.parameters,
+    parameters: input.parameters as CreateReportInput["parameters"],
   });
 
   if (error) {

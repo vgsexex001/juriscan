@@ -58,7 +58,7 @@ export default function CreateReportModal({
       await onCreate({
         type: selectedType,
         title: title || `${REPORT_TYPE_INFO[selectedType].label} - ${new Date().toLocaleDateString("pt-BR")}`,
-        parameters,
+        parameters: parameters as unknown as CreateReportInput["parameters"],
       });
       handleClose();
     } catch (err) {
