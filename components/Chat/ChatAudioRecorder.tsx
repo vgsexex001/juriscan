@@ -50,29 +50,50 @@ export default function ChatAudioRecorder({
 
   // Estado de erro - mostrar primeiro
   if (error) {
+    const isPermissionError = error.includes("Permissão") || error.includes("negada");
+
     return (
-      <div className="flex items-center gap-3 px-4 py-3 bg-red-50 rounded-xl border border-red-200">
-        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-        <span className="text-sm text-red-600 flex-1">{error}</span>
-        <button
-          onClick={() => {
-            resetRecording();
-            hasStartedRef.current = false;
-          }}
-          className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors"
-        >
-          Tentar novamente
-        </button>
-        <button
-          onClick={() => {
-            resetRecording();
-            onCancel();
-          }}
-          className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-100 rounded-full"
-          aria-label="Fechar"
-        >
-          <X className="w-4 h-4" />
-        </button>
+      <div className="flex flex-col gap-2 px-4 py-3 bg-red-50 rounded-xl border border-red-200">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-red-600 font-medium">
+              {isPermissionError ? "Permissão de microfone necessária" : "Erro ao gravar áudio"}
+            </p>
+            {isPermissionError ? (
+              <div className="text-xs text-red-500 mt-1 space-y-1">
+                <p>Para habilitar o microfone:</p>
+                <ol className="list-decimal list-inside ml-1">
+                  <li>Clique no ícone 🔒 na barra de endereço</li>
+                  <li>Encontre &quot;Microfone&quot; e selecione &quot;Permitir&quot;</li>
+                  <li>Recarregue a página (F5)</li>
+                </ol>
+              </div>
+            ) : (
+              <p className="text-xs text-red-500 mt-1">{error}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 justify-end">
+          <button
+            onClick={() => {
+              resetRecording();
+              hasStartedRef.current = false;
+            }}
+            className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors"
+          >
+            Tentar novamente
+          </button>
+          <button
+            onClick={() => {
+              resetRecording();
+              onCancel();
+            }}
+            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     );
   }

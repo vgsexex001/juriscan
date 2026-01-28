@@ -246,16 +246,28 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       let errorMessage = "Erro ao iniciar gravação";
       if (error instanceof Error) {
-        if (error.name === "NotAllowedError") {
-          errorMessage = "Permissão de microfone negada. Clique no ícone de cadeado na barra de endereço para permitir.";
+        console.error("🎤 Error details:", error.name, error.message);
+
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+          // Verificar se é HTTPS
+          const isSecure = typeof window !== "undefined" &&
+            (window.location.protocol === "https:" || window.location.hostname === "localhost");
+
+          if (!isSecure) {
+            errorMessage = "Gravação de áudio requer conexão segura (HTTPS).";
+          } else {
+            errorMessage = "Permissão de microfone negada. Para habilitar:\n1. Clique no ícone 🔒 na barra de endereço\n2. Encontre 'Microfone' e selecione 'Permitir'\n3. Recarregue a página";
+          }
         } else if (error.name === "NotFoundError") {
           errorMessage = "Nenhum microfone encontrado. Conecte um microfone e tente novamente.";
         } else if (error.name === "NotReadableError") {
-          errorMessage = "Microfone está sendo usado por outro aplicativo.";
+          errorMessage = "Microfone está sendo usado por outro aplicativo. Feche outros apps e tente novamente.";
         } else if (error.name === "OverconstrainedError") {
           errorMessage = "Configuração de microfone não suportada.";
+        } else if (error.name === "SecurityError") {
+          errorMessage = "Erro de segurança. Verifique se o site está em HTTPS.";
         } else {
-          errorMessage = `Erro: ${error.message}`;
+          errorMessage = `Erro ao acessar microfone: ${error.message}`;
         }
       }
 
