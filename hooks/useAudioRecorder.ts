@@ -182,10 +182,17 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudi
   }, [stopRecording]);
 
   const startRecording = useCallback(async () => {
-    console.log("🎤 Starting recording...");
+    console.log("🎤 startRecording() called");
     cancelledRef.current = false;
 
-    if (!state.isSupported) {
+    // Check support directly (not from state which might be stale)
+    const hasMediaDevices = !!navigator?.mediaDevices?.getUserMedia;
+    const hasMediaRecorder = typeof MediaRecorder !== "undefined";
+    const supported = hasMediaDevices && hasMediaRecorder;
+
+    console.log("🎤 Support check:", { hasMediaDevices, hasMediaRecorder, supported });
+
+    if (!supported) {
       console.error("🎤 Audio recording not supported");
       setState((prev) => ({
         ...prev,
@@ -203,8 +210,8 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudi
         URL.revokeObjectURL(state.audioUrl);
       }
 
-      // Request microphone permission
-      console.log("🎤 Requesting microphone permission...");
+      // Request microphone permission - THIS WILL OPEN BROWSER POPUP
+      console.log("🎤 Calling navigator.mediaDevices.getUserMedia() - browser popup should appear...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -366,7 +373,7 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudi
 
       setState((prev) => ({ ...prev, error: errorMessage }));
     }
-  }, [state.isSupported, state.audioUrl, fftSize, onWaveformData, startTimer, stopTimer, stopAnalyser, updateWaveform]);
+  }, [state.audioUrl, fftSize, onWaveformData, startTimer, stopTimer, stopAnalyser, updateWaveform]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {

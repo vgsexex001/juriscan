@@ -425,7 +425,6 @@ function ChatContent() {
                 <AudioRecorder
                   onRecordingComplete={handleAudioComplete}
                   onCancel={() => setIsRecordingAudio(false)}
-                  mode="tap"
                   disabled={isStreaming || isUploading}
                 />
               </div>
