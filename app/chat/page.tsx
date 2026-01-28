@@ -15,12 +15,13 @@ import {
   AlertCircle,
   Image as ImageIcon,
   FileText,
+  Mic,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import ChatMessage from "@/components/ChatMessage";
 import SuggestionCards from "@/components/SuggestionCards";
 import LegalDisclaimerInline from "@/components/LegalDisclaimerInline";
-import { ChatAttachmentPreview, ChatAudioRecorder } from "@/components/Chat";
+import { ChatAttachmentPreview, AudioRecorder } from "@/components/Chat";
 import { useConversations, useConversation } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { useCredits } from "@/hooks/useCredits";
@@ -421,9 +422,10 @@ function ChatContent() {
             {/* Audio Recorder */}
             {isRecordingAudio ? (
               <div className="flex items-center justify-center py-2">
-                <ChatAudioRecorder
+                <AudioRecorder
                   onRecordingComplete={handleAudioComplete}
                   onCancel={() => setIsRecordingAudio(false)}
+                  mode="tap"
                   disabled={isStreaming || isUploading}
                 />
               </div>
@@ -509,24 +511,11 @@ function ChatContent() {
                 <button
                   onClick={() => setIsRecordingAudio(true)}
                   disabled={isStreaming || isUploading}
-                  className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 disabled:opacity-50 rounded-lg transition-colors"
+                  className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 disabled:opacity-50 rounded-full transition-colors"
                   aria-label="Gravar áudio"
+                  title="Gravar áudio"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                    <line x1="12" x2="12" y1="19" y2="22" />
-                  </svg>
+                  <Mic className="w-5 h-5" />
                 </button>
 
                 {/* Send Button */}

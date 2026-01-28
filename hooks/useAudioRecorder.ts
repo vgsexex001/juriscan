@@ -13,15 +13,22 @@ interface AudioRecorderState {
   isSupported: boolean;
 }
 
+interface UseAudioRecorderOptions {
+  onWaveformData?: (data: Uint8Array) => void;
+  fftSize?: number;
+}
+
 interface UseAudioRecorderReturn extends AudioRecorderState {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   pauseRecording: () => void;
   resumeRecording: () => void;
   resetRecording: () => void;
+  cancelRecording: () => void;
+  getWaveformData: () => Uint8Array | null;
 }
 
-// Obter MIME type suportado pelo navegador
+// Get supported MIME type for the browser
 function getSupportedMimeType(): string {
   if (typeof window === "undefined") return "audio/webm";
 
@@ -44,7 +51,9 @@ function getSupportedMimeType(): string {
   return "audio/webm";
 }
 
-export function useAudioRecorder(): UseAudioRecorderReturn {
+export function useAudioRecorder(options: UseAudioRecorderOptions = {}): UseAudioRecorderReturn {
+  const { onWaveformData, fftSize = 256 } = options;
+
   const [state, setState] = useState<AudioRecorderState>({
     isRecording: false,
     isPaused: false,
@@ -52,7 +61,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     audioBlob: null,
     audioUrl: null,
     error: null,
-    isSupported: false, // Será atualizado no useEffect
+    isSupported: false,
   });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -63,7 +72,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const pausedDurationRef = useRef<number>(0);
   const mimeTypeRef = useRef<string>("audio/webm");
 
-  // Verificar suporte no cliente
+  // Audio analysis refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const waveformDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Flag to track if recording was cancelled
+  const cancelledRef = useRef<boolean>(false);
+
+  // Check support on client
   useEffect(() => {
     const checkSupport = () => {
       const hasMediaDevices = !!navigator?.mediaDevices?.getUserMedia;
@@ -86,14 +105,20 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     checkSupport();
   }, []);
 
-  // Limpar recursos ao desmontar
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
       }
     };
   }, []);
@@ -105,14 +130,39 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
   }, []);
 
+  const stopAnalyser = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  }, []);
+
+  // Get current waveform data
+  const getWaveformData = useCallback((): Uint8Array | null => {
+    if (!analyserRef.current || !waveformDataRef.current) return null;
+    const data = waveformDataRef.current;
+    analyserRef.current.getByteTimeDomainData(data);
+    return data;
+  }, []);
+
+  // Animation loop for waveform data
+  const updateWaveform = useCallback(() => {
+    if (analyserRef.current && waveformDataRef.current && onWaveformData) {
+      analyserRef.current.getByteTimeDomainData(waveformDataRef.current);
+      onWaveformData(waveformDataRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(updateWaveform);
+  }, [onWaveformData]);
+
   const stopRecording = useCallback(() => {
     console.log("🎤 Stopping recording...");
     stopTimer();
+    stopAnalyser();
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
-  }, [stopTimer]);
+  }, [stopTimer, stopAnalyser]);
 
   const startTimer = useCallback(() => {
     startTimeRef.current = Date.now() - pausedDurationRef.current * 1000;
@@ -120,7 +170,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-      // Verificar limite de duração
+      // Check duration limit
       if (elapsed >= CHAT_ATTACHMENT_LIMITS.maxAudioDuration) {
         console.log("🎤 Max duration reached, stopping...");
         stopRecording();
@@ -133,6 +183,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const startRecording = useCallback(async () => {
     console.log("🎤 Starting recording...");
+    cancelledRef.current = false;
 
     if (!state.isSupported) {
       console.error("🎤 Audio recording not supported");
@@ -144,7 +195,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
 
     try {
-      // Resetar estado
+      // Reset state
       chunksRef.current = [];
       pausedDurationRef.current = 0;
 
@@ -152,7 +203,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         URL.revokeObjectURL(state.audioUrl);
       }
 
-      // Solicitar permissão do microfone
+      // Request microphone permission
       console.log("🎤 Requesting microphone permission...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -165,7 +216,24 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       console.log("🎤 Microphone permission granted, stream:", stream.id);
       streamRef.current = stream;
 
-      // Criar MediaRecorder com MIME type suportado
+      // Setup audio analysis for waveform
+      try {
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = fftSize;
+        sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+        sourceRef.current.connect(analyserRef.current);
+        waveformDataRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+
+        // Start waveform animation if callback provided
+        if (onWaveformData) {
+          updateWaveform();
+        }
+      } catch (audioErr) {
+        console.warn("🎤 Audio analysis not available:", audioErr);
+      }
+
+      // Create MediaRecorder with supported MIME type
       const mimeType = mimeTypeRef.current;
       console.log("🎤 Creating MediaRecorder with mimeType:", mimeType);
 
@@ -184,7 +252,31 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       };
 
       mediaRecorder.onstop = () => {
-        console.log("🎤 Recording stopped, chunks:", chunksRef.current.length);
+        console.log("🎤 Recording stopped, chunks:", chunksRef.current.length, "cancelled:", cancelledRef.current);
+
+        // Cleanup audio context
+        if (sourceRef.current) {
+          sourceRef.current.disconnect();
+          sourceRef.current = null;
+        }
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+        analyserRef.current = null;
+
+        // If cancelled, don't create blob
+        if (cancelledRef.current) {
+          setState((prev) => ({
+            ...prev,
+            isRecording: false,
+            isPaused: false,
+            duration: 0,
+            audioBlob: null,
+            audioUrl: null,
+          }));
+          return;
+        }
 
         if (chunksRef.current.length === 0) {
           console.error("🎤 No audio data collected!");
@@ -209,7 +301,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           audioUrl: url,
         }));
 
-        // Parar stream
+        // Stop stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
@@ -219,6 +311,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       mediaRecorder.onerror = (event) => {
         console.error("🎤 MediaRecorder error:", event);
         stopTimer();
+        stopAnalyser();
         setState((prev) => ({
           ...prev,
           isRecording: false,
@@ -226,7 +319,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         }));
       };
 
-      // Iniciar gravação - solicitar dados a cada 1 segundo
+      // Start recording - request data every 1 second
       mediaRecorder.start(1000);
       startTimer();
 
@@ -249,7 +342,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         console.error("🎤 Error details:", error.name, error.message);
 
         if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-          // Verificar se é HTTPS
+          // Check if HTTPS
           const isSecure = typeof window !== "undefined" &&
             (window.location.protocol === "https:" || window.location.hostname === "localhost");
 
@@ -273,30 +366,66 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       setState((prev) => ({ ...prev, error: errorMessage }));
     }
-  }, [state.isSupported, state.audioUrl, startTimer, stopTimer]);
+  }, [state.isSupported, state.audioUrl, fftSize, onWaveformData, startTimer, stopTimer, stopAnalyser, updateWaveform]);
 
   const pauseRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
       console.log("🎤 Pausing recording...");
       mediaRecorderRef.current.pause();
       stopTimer();
+      stopAnalyser();
       pausedDurationRef.current = state.duration;
       setState((prev) => ({ ...prev, isPaused: true }));
     }
-  }, [state.duration, stopTimer]);
+  }, [state.duration, stopTimer, stopAnalyser]);
 
   const resumeRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "paused") {
       console.log("🎤 Resuming recording...");
       mediaRecorderRef.current.resume();
       startTimer();
+      if (onWaveformData) {
+        updateWaveform();
+      }
       setState((prev) => ({ ...prev, isPaused: false }));
     }
-  }, [startTimer]);
+  }, [startTimer, onWaveformData, updateWaveform]);
+
+  // Cancel recording without saving
+  const cancelRecording = useCallback(() => {
+    console.log("🎤 Cancelling recording...");
+    cancelledRef.current = true;
+    stopTimer();
+    stopAnalyser();
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    chunksRef.current = [];
+    pausedDurationRef.current = 0;
+    mediaRecorderRef.current = null;
+
+    setState((prev) => ({
+      ...prev,
+      isRecording: false,
+      isPaused: false,
+      duration: 0,
+      audioBlob: null,
+      audioUrl: null,
+      error: null,
+    }));
+  }, [stopTimer, stopAnalyser]);
 
   const resetRecording = useCallback(() => {
     console.log("🎤 Resetting recording...");
     stopTimer();
+    stopAnalyser();
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -324,7 +453,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       audioUrl: null,
       error: null,
     }));
-  }, [state.audioUrl, stopTimer]);
+  }, [state.audioUrl, stopTimer, stopAnalyser]);
 
   return {
     ...state,
@@ -333,5 +462,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     pauseRecording,
     resumeRecording,
     resetRecording,
+    cancelRecording,
+    getWaveformData,
   };
 }
