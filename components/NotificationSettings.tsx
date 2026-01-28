@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Loader2 } from "lucide-react";
 
 interface NotificationPreferences {
   analises_concluidas: boolean;
@@ -70,23 +70,70 @@ export default function NotificationSettings({
   const [preferences, setPreferences] =
     useState<NotificationPreferences>(defaultPreferences);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Fetch preferences on mount
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const response = await fetch("/api/notifications/preferences");
+        if (response.ok) {
+          const result = await response.json();
+          setPreferences(result.data.preferences);
+        }
+      } catch {
+        // Use defaults on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPreferences();
+  }, []);
 
   const handleToggle = (id: keyof NotificationPreferences) => {
     setPreferences((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
+    setSuccess(false);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    setError(null);
+    setSuccess(false);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch("/api/notifications/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
+      });
 
-    onSave?.(preferences);
-    setIsSaving(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao salvar preferências");
+      }
+
+      setSuccess(true);
+      onSave?.(preferences);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar preferências");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -129,6 +176,19 @@ export default function NotificationSettings({
           </div>
         ))}
       </div>
+
+      {/* Feedback Messages */}
+      {error && (
+        <div className="max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="max-w-2xl bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-sm text-green-700">Preferências salvas com sucesso!</p>
+        </div>
+      )}
 
       {/* Save Button */}
       <div className="flex justify-end pt-6 mt-6 border-t border-gray-100 max-w-2xl">

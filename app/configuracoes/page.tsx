@@ -11,11 +11,20 @@ import PlanSettings from "@/components/PlanSettings";
 import PrivacySettings from "@/components/PrivacySettings";
 import TermsSettings from "@/components/TermsSettings";
 import { useTour } from "@/hooks/useTour";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function ConfiguracoesPage() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("perfil");
   const { resetTour } = useTour();
+  const { profile } = useProfile();
+
+  // Format accepted date
+  const formatAcceptedDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return "Data não registrada";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("pt-BR");
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -25,46 +34,22 @@ export default function ConfiguracoesPage() {
     setActiveTab(tabId);
   };
 
-  const handleSave = (data: unknown) => {
-    console.log("Saving profile data:", data);
-    // API call would go here
-  };
-
-  const handleCancel = () => {
-    console.log("Cancelled changes");
-  };
-
   const renderSettingsContent = () => {
     switch (activeTab) {
       case "perfil":
-        return <ProfileSettings onSave={handleSave} onCancel={handleCancel} />;
+        return <ProfileSettings />;
       case "notificacoes":
-        return <NotificationSettings onSave={(prefs) => console.log("Saving notifications:", prefs)} />;
+        return <NotificationSettings />;
       case "seguranca":
-        return (
-          <SecuritySettings
-            onPasswordChange={(data) => console.log("Password change:", data)}
-            onRevokeApiKey={() => console.log("API key revoked")}
-            onEndSession={(sessionId) => console.log("Session ended:", sessionId)}
-          />
-        );
+        return <SecuritySettings />;
       case "plano":
         return <PlanSettings />;
       case "privacidade":
-        return (
-          <PrivacySettings
-            onToggleChange={(id, value) => console.log("Privacy toggle:", id, value)}
-            onRequestExport={() => console.log("Export requested")}
-            onDeleteData={() => console.log("Data deleted")}
-            onDeleteAccount={() => console.log("Account deleted")}
-            userEmail="advogado@email.com"
-          />
-        );
+        return <PrivacySettings userEmail={profile?.email} />;
       case "termos":
         return (
           <TermsSettings
-            acceptedDate="14/01/2026"
-            onViewDocument={(docId) => console.log("View document:", docId)}
+            acceptedDate={formatAcceptedDate(profile?.terms_accepted_at)}
             onRestartTour={() => resetTour()}
           />
         );

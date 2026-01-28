@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle, X } from "lucide-react";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 interface PrivacyPreferences {
   share_data_improvements: boolean;
@@ -47,10 +49,12 @@ export default function PrivacySettings({
   onDeleteAccount,
   userEmail = "advogado@email.com",
 }: PrivacySettingsProps) {
+  const router = useRouter();
   const [preferences, setPreferences] =
     useState<PrivacyPreferences>(defaultPreferences);
   const [isExporting, setIsExporting] = useState(false);
   const [exportRequested, setExportRequested] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Modal states
   const [deleteDataModalOpen, setDeleteDataModalOpen] = useState(false);
@@ -69,35 +73,103 @@ export default function PrivacySettings({
 
   const handleRequestExport = async () => {
     setIsExporting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsExporting(false);
-    setExportRequested(true);
-    onRequestExport?.();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/privacy/export", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao exportar dados");
+      }
+
+      const result = await response.json();
+
+      // Download the data as JSON file
+      const blob = new Blob([JSON.stringify(result.data.data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `juriscan-dados-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExportRequested(true);
+      onRequestExport?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar dados");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleDeleteData = async () => {
     if (confirmationInput !== "EXCLUIR DADOS") return;
 
     setIsDeleting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsDeleting(false);
-    setDeleteDataModalOpen(false);
-    setConfirmationInput("");
-    onDeleteData?.();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/privacy/data", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: confirmationInput }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao excluir dados");
+      }
+
+      setDeleteDataModalOpen(false);
+      setConfirmationInput("");
+      onDeleteData?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir dados");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
     if (confirmationInput !== userEmail) return;
 
     setIsDeleting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsDeleting(false);
-    setDeleteAccountModalOpen(false);
-    setConfirmationInput("");
-    onDeleteAccount?.();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/privacy/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: confirmationInput }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao excluir conta");
+      }
+
+      // Sign out locally and redirect
+      const supabase = getSupabaseClient();
+      await supabase.auth.signOut();
+
+      setDeleteAccountModalOpen(false);
+      setConfirmationInput("");
+      onDeleteAccount?.();
+
+      // Redirect to login
+      router.push("/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir conta");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const closeModals = () => {
@@ -108,6 +180,13 @@ export default function PrivacySettings({
 
   return (
     <div className="space-y-6">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       {/* Data Privacy Section */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
