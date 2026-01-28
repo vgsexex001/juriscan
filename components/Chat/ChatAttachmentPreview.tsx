@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { X, FileText, Image as ImageIcon, Mic, Loader2 } from "lucide-react";
 import type { PendingAttachment, UploadProgress } from "@/types/chat";
 import { formatFileSize, formatAudioDuration } from "@/types/chat";
@@ -39,10 +40,13 @@ export default function ChatAttachmentPreview({
           >
             {/* Ícone por tipo */}
             {attachment.type === "image" && attachment.preview ? (
-              <img
+              <Image
                 src={attachment.preview}
                 alt={attachment.file.name}
+                width={40}
+                height={40}
                 className="w-10 h-10 object-cover rounded"
+                unoptimized
               />
             ) : attachment.type === "image" ? (
               <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">

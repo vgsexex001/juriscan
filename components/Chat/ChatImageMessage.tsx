@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { X, Download, ZoomIn, Loader2 } from "lucide-react";
 import type { ChatAttachment } from "@/types/chat";
 
@@ -39,15 +40,18 @@ export default function ChatImageMessage({ attachment }: ChatImageMessageProps) 
             <span className="text-sm text-gray-500">Erro ao carregar imagem</span>
           </div>
         ) : (
-          <img
+          <Image
             src={attachment.url}
             alt={attachment.name}
+            width={320}
+            height={256}
             className={`max-w-full max-h-64 object-contain cursor-pointer transition-opacity ${
               isLoading ? "opacity-0" : "opacity-100"
             }`}
             onClick={() => setIsModalOpen(true)}
             onLoad={handleLoad}
             onError={handleError}
+            unoptimized
           />
         )}
 
@@ -105,11 +109,13 @@ export default function ChatImageMessage({ attachment }: ChatImageMessageProps) 
           </a>
 
           {/* Imagem ampliada */}
-          <img
+          <Image
             src={attachment.url}
             alt={attachment.name}
-            className="max-w-full max-h-full object-contain"
+            fill
+            className="object-contain"
             onClick={(e) => e.stopPropagation()}
+            unoptimized
           />
 
           {/* Nome do arquivo */}
