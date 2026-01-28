@@ -473,7 +473,7 @@ function ChatContent() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.doc,.docx,.txt"
+                  accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,text/plain"
                   multiple
                   onChange={handleFileSelect}
                   className="hidden"
@@ -481,7 +481,7 @@ function ChatContent() {
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp,image/heic,.jpg,.jpeg,.png,.gif,.webp,.heic"
+                  accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,image/jpeg,image/png,image/gif,image/webp,image/bmp"
                   multiple
                   onChange={handleFileSelect}
                   className="hidden"
