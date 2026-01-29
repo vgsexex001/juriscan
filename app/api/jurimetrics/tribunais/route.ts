@@ -8,7 +8,7 @@ import { getLegalDataGateway } from '@/src/infrastructure/gateways/LegalDataGate
 
 /**
  * GET /api/jurimetrics/tribunais
- * Retorna lista de tribunais disponíveis
+ * Retorna lista de tribunais disponíveis (público)
  */
 export const GET = apiHandler(async () => {
   const gateway = getLegalDataGateway();
@@ -19,4 +19,4 @@ export const GET = apiHandler(async () => {
     tribunais,
     total: tribunais.length,
   });
-});
+}, { requireAuth: false });

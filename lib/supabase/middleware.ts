@@ -39,7 +39,15 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Define public routes that don't require authentication
-  const publicRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const publicRoutes = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/api/jurimetrics/health",
+    "/api/jurimetrics/tribunais",
+    "/api/stripe/webhook",  // Stripe webhooks need to be public
+  ];
   const isPublicRoute = publicRoutes.some(route =>
     request.nextUrl.pathname.startsWith(route)
   );

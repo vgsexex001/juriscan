@@ -8,7 +8,7 @@ import { getLegalDataGateway } from '@/src/infrastructure/gateways/LegalDataGate
 
 /**
  * GET /api/jurimetrics/health
- * Retorna status de saúde dos providers
+ * Retorna status de saúde dos providers (público para monitoramento)
  */
 export const GET = apiHandler(async () => {
   const gateway = getLegalDataGateway();
@@ -36,4 +36,4 @@ export const GET = apiHandler(async () => {
     cache_stats: gateway.getCacheStats(),
     timestamp: new Date().toISOString(),
   });
-});
+}, { requireAuth: false });
