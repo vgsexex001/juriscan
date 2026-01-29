@@ -169,11 +169,16 @@ export class LegalDataGateway {
     }
 
     if (params.incluirJurimetrics !== false && params.tribunal && params.periodo) {
+      // IMPORTANTE: Não filtrar jurimetria por classe/matéria
+      // DataJud usa nomenclaturas específicas que podem não corresponder
+      // Buscar todos os processos do tribunal e deixar as agregações mostrarem a distribuição
+      console.log('📊 [LegalDataGateway] Calculando jurimetria:', {
+        tribunal: params.tribunal,
+        periodo: params.periodo,
+      });
       promises.push(this.getJurimetrics({
         tribunal: params.tribunal,
-        classe: params.classe,
-        assunto: params.assunto,
-        materia: params.materia,
+        // Não passar classe/assunto/materia para obter dados gerais do tribunal
         periodo: params.periodo,
       }).catch(e => {
         erros.push(`Jurimetria: ${e.message}`);
