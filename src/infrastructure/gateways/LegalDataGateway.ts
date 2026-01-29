@@ -334,11 +334,22 @@ export class LegalDataGateway {
     });
 
     // Usar primeiro provider que suporta jurimetria
+    console.log('🔍 [LegalDataGateway] Providers disponíveis:', Array.from(this.providers.keys()));
+
     for (const [name, provider] of Array.from(this.providers.entries())) {
       const metadata = provider.getMetadata();
+      console.log(`🔍 [LegalDataGateway] Verificando provider ${name}:`, {
+        capabilities: metadata.capabilities,
+        has_jurimetrics: metadata.capabilities.includes('get_jurimetrics'),
+      });
+
       if (metadata.capabilities.includes('get_jurimetrics')) {
         try {
+          console.log(`🔍 [LegalDataGateway] Chamando getJurimetrics em ${name}...`);
           const jurimetrics = await provider.getJurimetrics(params);
+          console.log(`✅ [LegalDataGateway] Jurimetria obtida de ${name}:`, {
+            total_processos: jurimetrics?.metricas?.total_processos,
+          });
 
           // Salvar no cache
           if (this.config.enableCache) {
@@ -347,7 +358,7 @@ export class LegalDataGateway {
 
           return jurimetrics;
         } catch (error) {
-          console.warn(`⚠️ [LegalDataGateway] Erro ao obter jurimetria de ${name}:`, error);
+          console.error(`❌ [LegalDataGateway] Erro ao obter jurimetria de ${name}:`, error);
         }
       }
     }
