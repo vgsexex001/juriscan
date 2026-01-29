@@ -111,8 +111,12 @@ const KEYWORDS_BY_AREA: Record<string, string[]> = {
     'rescisão indireta', 'hora extra', 'horas extras', 'verbas rescisórias',
     'adicional noturno', 'insalubridade', 'periculosidade', 'FGTS',
     'demissão', 'justa causa', 'aviso prévio', 'férias', '13º salário',
-    'reclamação trabalhista', 'CLT', 'empregador', 'empregado',
+    'reclamação trabalhista', 'reclamações trabalhistas', 'ação trabalhista',
+    'ações trabalhistas', 'processo trabalhista', 'processos trabalhistas',
+    'CLT', 'empregador', 'empregado', 'trabalhador', 'trabalhadores',
     'vínculo empregatício', 'carteira assinada', 'dano moral trabalhista',
+    'trabalhista', 'justiça do trabalho', 'tribunal do trabalho',
+    'taxa de procedência', 'procedência',
   ],
   consumidor: [
     'CDC', 'código de defesa do consumidor', 'relação de consumo',
@@ -225,11 +229,19 @@ export class AnalyzeCaseUseCase {
   private extractEntities(mensagem: string): ExtractedEntities {
     const keywords: string[] = [];
     let confianca = 0;
+    const mensagemLower = mensagem.toLowerCase();
 
     // Extrair tribunal
     const tribunalMatch = mensagem.match(PATTERNS.TRIBUNAL);
     const tribunal = tribunalMatch ? tribunalMatch[0].toUpperCase() : undefined;
     if (tribunal) confianca += 0.3;
+
+    // Detectar contexto de jurimetria/estatísticas
+    const isJurimetricsQuestion = /taxa|estatística|porcentagem|percentual|quantos|média|médio|tempo|duração|probabilidade|chance/i.test(mensagem);
+    if (isJurimetricsQuestion) {
+      confianca += 0.2;
+      keywords.push('jurimetria');
+    }
 
     // Extrair número do processo
     const numeroMatch = mensagem.match(PATTERNS.NUMERO_PROCESSO);
@@ -248,7 +260,6 @@ export class AnalyzeCaseUseCase {
     // Identificar matéria e extrair keywords
     let materia: string | undefined;
     let maxKeywords = 0;
-    const mensagemLower = mensagem.toLowerCase();
 
     for (const [area, areaKeywords] of Object.entries(KEYWORDS_BY_AREA)) {
       const found = areaKeywords.filter(kw => mensagemLower.includes(kw.toLowerCase()));
@@ -305,7 +316,8 @@ export class AnalyzeCaseUseCase {
     // Buscar se:
     // 1. Tem número de processo específico
     // 2. Tem tribunal E (tipo de ação OU matéria OU keywords)
-    // 3. Confiança > 0.3
+    // 3. Tem tribunal apenas (para buscar jurimetria geral)
+    // 4. Confiança >= 0.3
 
     if (entidades.numero_processo) return true;
 
@@ -313,7 +325,12 @@ export class AnalyzeCaseUseCase {
       return true;
     }
 
-    return entidades.confianca > 0.3;
+    // Se tem apenas tribunal, ainda vale buscar jurimetria
+    if (entidades.tribunal) {
+      return true;
+    }
+
+    return entidades.confianca >= 0.3;
   }
 
   /**
