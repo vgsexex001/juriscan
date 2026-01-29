@@ -446,30 +446,54 @@ export class AnalyzeCaseUseCase {
       const temTaxas = j.taxas.procedencia > 0;
 
       sections.push(`
-## DADOS REAIS DO ${entidades.tribunal || 'TRIBUNAL'} (Fonte: DataJud/CNJ)
+# 📊 DADOS OFICIAIS DO ${entidades.tribunal || 'TRIBUNAL'}
+**Fonte:** DataJud/CNJ (Conselho Nacional de Justiça)
 
-**IMPORTANTE: Use estes dados reais na sua resposta!**
-
-- **Total de processos analisados:** ${j.total_processos.toLocaleString('pt-BR')} processos
-- **Período:** ${dados.jurimetrics.periodo.inicio.toLocaleDateString('pt-BR')} a ${dados.jurimetrics.periodo.fim.toLocaleDateString('pt-BR')}
-${temTaxas ? `- **Taxa de procedência:** ${(j.taxas.procedencia * 100).toFixed(1)}%` : '- **Taxa de procedência:** Dados não disponíveis no DataJud (o sistema não fornece resultados de julgamento)'}
-${j.taxas.acordo > 0 ? `- **Taxa de acordos:** ${(j.taxas.acordo * 100).toFixed(1)}%` : ''}
-${j.tempos.distribuicao_sentenca_dias > 0 ? `- **Tempo médio até sentença:** ${j.tempos.distribuicao_sentenca_dias} dias` : ''}
-${j.valores.media_condenacao > 0 ? `- **Valor médio de condenação:** R$ ${j.valores.media_condenacao.toLocaleString('pt-BR')}` : ''}
+| Métrica | Valor |
+|---------|-------|
+| **Total de Processos** | **${j.total_processos.toLocaleString('pt-BR')}** |
+| **Período Analisado** | ${dados.jurimetrics.periodo.inicio.toLocaleDateString('pt-BR')} a ${dados.jurimetrics.periodo.fim.toLocaleDateString('pt-BR')} |
+${temTaxas ? `| **Taxa de Procedência** | **${(j.taxas.procedencia * 100).toFixed(1)}%** |` : ''}
+${j.taxas.acordo > 0 ? `| **Taxa de Acordos** | **${(j.taxas.acordo * 100).toFixed(1)}%** |` : ''}
+${j.tempos.distribuicao_sentenca_dias > 0 ? `| **Tempo Médio até Sentença** | **${j.tempos.distribuicao_sentenca_dias} dias** |` : ''}
+${j.valores.media_condenacao > 0 ? `| **Valor Médio de Condenação** | **R$ ${j.valores.media_condenacao.toLocaleString('pt-BR')}** |` : ''}
 `);
 
       // Distribuição por classe (top 5)
       if (j.distribuicao.por_classe.length > 0) {
         const top5 = j.distribuicao.por_classe.slice(0, 5);
         sections.push(`
-### Distribuição por tipo de ação (dados reais):
+### 📊 Distribuição por Tipo de Ação:
 ${top5.map((c, i) => `${i + 1}. **${c.classe}**: ${c.quantidade.toLocaleString('pt-BR')} processos (${(c.percentual * 100).toFixed(1)}%)`).join('\n')}
 
-**INSTRUÇÕES OBRIGATÓRIAS PARA A RESPOSTA:**
-1. SEMPRE mencione o total de ${j.total_processos.toLocaleString('pt-BR')} processos analisados no início da resposta
-2. Use os números reais da distribuição por tipo de ação
-3. Se perguntarem sobre taxa de procedência e ela não estiver disponível, informe que o DataJud não fornece dados de resultado de julgamento
-4. Não invente percentuais de sucesso - use apenas os dados fornecidos acima
+---
+
+## 📝 INSTRUÇÕES DE FORMATAÇÃO DA RESPOSTA
+
+**Estruture sua resposta de forma elegante e profissional:**
+
+1. **Inicie com um resumo impactante** destacando o total de **${j.total_processos.toLocaleString('pt-BR')} processos** analisados
+
+2. **Use formatação rica:**
+   - Títulos com emojis para seções (📊 📈 ⚖️ 💡)
+   - **Negrito** para números e dados importantes
+   - Listas organizadas para facilitar leitura
+   - Separadores (---) entre seções quando apropriado
+
+3. **Organize em seções claras:**
+   - 📊 **Panorama Geral** - Total e período analisado
+   - 📈 **Distribuição por Tipo de Ação** - Dados percentuais
+   - ⚖️ **Análise** - Interpretação dos dados
+   - 💡 **Conclusão** - Recomendações práticas
+
+4. **Dados obrigatórios a mencionar:**
+   - Total: **${j.total_processos.toLocaleString('pt-BR')}** processos
+   - Período: ${dados.jurimetrics.periodo.inicio.toLocaleDateString('pt-BR')} a ${dados.jurimetrics.periodo.fim.toLocaleDateString('pt-BR')}
+   - Use os percentuais reais da distribuição acima
+
+5. **Se perguntarem sobre taxa de procedência:** Informe que o DataJud não fornece dados de resultado de julgamento, mas destaque os dados de volume que temos.
+
+6. **Não invente dados** - use apenas as informações fornecidas acima.
 `);
       }
     }
