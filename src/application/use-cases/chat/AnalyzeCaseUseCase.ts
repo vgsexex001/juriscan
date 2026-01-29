@@ -443,11 +443,16 @@ export class AnalyzeCaseUseCase {
     // Seção de jurimetria
     if (dados.jurimetrics) {
       const j = dados.jurimetrics.metricas;
+      const temTaxas = j.taxas.procedencia > 0;
+
       sections.push(`
-## DADOS DE JURIMETRIA (${entidades.tribunal || 'Geral'})
-- **Total de processos analisados:** ${j.total_processos.toLocaleString()}
+## DADOS REAIS DO ${entidades.tribunal || 'TRIBUNAL'} (Fonte: DataJud/CNJ)
+
+**IMPORTANTE: Use estes dados reais na sua resposta!**
+
+- **Total de processos analisados:** ${j.total_processos.toLocaleString('pt-BR')} processos
 - **Período:** ${dados.jurimetrics.periodo.inicio.toLocaleDateString('pt-BR')} a ${dados.jurimetrics.periodo.fim.toLocaleDateString('pt-BR')}
-${j.taxas.procedencia > 0 ? `- **Taxa de procedência:** ${(j.taxas.procedencia * 100).toFixed(1)}%` : ''}
+${temTaxas ? `- **Taxa de procedência:** ${(j.taxas.procedencia * 100).toFixed(1)}%` : '- **Taxa de procedência:** Dados não disponíveis no DataJud (o sistema não fornece resultados de julgamento)'}
 ${j.taxas.acordo > 0 ? `- **Taxa de acordos:** ${(j.taxas.acordo * 100).toFixed(1)}%` : ''}
 ${j.tempos.distribuicao_sentenca_dias > 0 ? `- **Tempo médio até sentença:** ${j.tempos.distribuicao_sentenca_dias} dias` : ''}
 ${j.valores.media_condenacao > 0 ? `- **Valor médio de condenação:** R$ ${j.valores.media_condenacao.toLocaleString('pt-BR')}` : ''}
@@ -457,8 +462,10 @@ ${j.valores.media_condenacao > 0 ? `- **Valor médio de condenação:** R$ ${j.v
       if (j.distribuicao.por_classe.length > 0) {
         const top5 = j.distribuicao.por_classe.slice(0, 5);
         sections.push(`
-### Classes mais frequentes:
-${top5.map((c, i) => `${i + 1}. ${c.classe}: ${c.quantidade.toLocaleString()} processos (${(c.percentual * 100).toFixed(1)}%)`).join('\n')}
+### Distribuição por tipo de ação (dados reais):
+${top5.map((c, i) => `${i + 1}. **${c.classe}**: ${c.quantidade.toLocaleString('pt-BR')} processos (${(c.percentual * 100).toFixed(1)}%)`).join('\n')}
+
+**Instrução:** Mencione estes números reais na sua resposta. Se o usuário perguntar sobre taxa de procedência e ela não estiver disponível, informe que o DataJud não fornece dados de resultado de julgamento.
 `);
       }
     }
