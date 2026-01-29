@@ -354,7 +354,9 @@ export class DataJudAdapter implements ILegalDataProvider {
    * Obtém dados de jurimetria agregados
    */
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
+    console.log('🎯 [DataJudAdapter.getJurimetrics] INÍCIO');
     const index = this.getIndex(params.tribunal);
+    console.log('🎯 [DataJudAdapter.getJurimetrics] Index:', index);
 
     // IMPORTANTE: DataJud tem defasagem significativa nos dados (6-12 meses)
     // Sempre usar período histórico para garantir que há dados disponíveis

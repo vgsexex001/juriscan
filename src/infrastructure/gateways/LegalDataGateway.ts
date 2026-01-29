@@ -313,11 +313,14 @@ export class LegalDataGateway {
    * Obtém jurimetria agregada
    */
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
+    console.log('🚀 [getJurimetrics] INÍCIO - tribunal:', params.tribunal);
+
     const cacheKey = cacheKeyJurimetrics(
       params.tribunal || 'all',
       params.periodo,
       { classe: params.classe, assunto: params.assunto }
     );
+    console.log('🔑 [getJurimetrics] Cache key gerada');
 
     // Verificar cache
     if (this.config.enableCache) {
