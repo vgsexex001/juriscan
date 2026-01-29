@@ -354,17 +354,11 @@ export class DataJudAdapter implements ILegalDataProvider {
    * Obtém dados de jurimetria agregados
    */
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
-    console.log('🎯 [DataJudAdapter.getJurimetrics] INÍCIO');
     const index = this.getIndex(params.tribunal);
-    console.log('🎯 [DataJudAdapter.getJurimetrics] Index:', index);
 
-    // IMPORTANTE: DataJud tem defasagem significativa nos dados (6-12 meses)
-    // Sempre usar período histórico para garantir que há dados disponíveis
-    // Período padrão: últimos 2 anos completos (ex: 2023-2024 se estamos em 2026)
+    // DataJud tem defasagem nos dados - usar período histórico consolidado
     const now = new Date();
     const currentYear = now.getFullYear();
-
-    // Usar dados de 2 anos atrás até 1 ano atrás (período com dados consolidados)
     const adjustedFim = new Date(currentYear - 1, 11, 31);  // 31/12 do ano passado
     const adjustedInicio = new Date(currentYear - 3, 0, 1);  // 01/01 de 3 anos atrás
 
@@ -375,18 +369,6 @@ export class DataJudAdapter implements ILegalDataProvider {
         fim: adjustedFim,
       },
     };
-
-    console.log('[DataJud] Buscando jurimetria:', {
-      index,
-      periodo_original: {
-        inicio: params.periodo.inicio.toISOString().split('T')[0],
-        fim: params.periodo.fim.toISOString().split('T')[0],
-      },
-      periodo_ajustado: {
-        inicio: adjustedParams.periodo.inicio.toISOString().split('T')[0],
-        fim: adjustedParams.periodo.fim.toISOString().split('T')[0],
-      },
-    });
 
     const body = {
       size: 0,
@@ -404,24 +386,14 @@ export class DataJudAdapter implements ILegalDataProvider {
         por_orgao: {
           terms: { field: 'orgaoJulgador.nome.keyword', size: 20 },
         },
-        // Removido date_histogram porque dataAjuizamento é string, não date
         valor_causa_stats: {
           stats: { field: 'valorCausa' },
         },
       },
     };
 
-    console.log('[DataJud] Query:', JSON.stringify(body.query, null, 2));
-
     try {
       const response = await this.makeRequest<DataJudSearchResponse>(`${index}/_search`, body);
-
-      console.log('[DataJud] Resposta:', {
-        total_hits: response.hits?.total?.value,
-        aggs_keys: Object.keys(response.aggregations || {}),
-        total_processos: (response.aggregations?.total_processos as DataJudAggregation)?.value,
-      });
-
       return this.mapToJurimetrics(response, adjustedParams);
     } catch (error) {
       console.error('[DataJud] Erro ao buscar jurimetria:', error);
@@ -640,8 +612,6 @@ export class DataJudAdapter implements ILegalDataProvider {
     // Período é obrigatório - DataJud usa formato YYYYMMDDHHmmss
     const inicioFormatted = this.formatDateForDataJud(params.periodo.inicio);
     const fimFormatted = this.formatDateForDataJud(params.periodo.fim);
-
-    console.log('[DataJud] Filtro de data:', { inicio: inicioFormatted, fim: fimFormatted });
 
     filter.push({
       range: {
