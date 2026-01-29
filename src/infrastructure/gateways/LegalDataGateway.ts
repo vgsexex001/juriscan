@@ -313,61 +313,53 @@ export class LegalDataGateway {
    * Obtém jurimetria agregada
    */
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
-    console.log('🚀 [getJurimetrics] INÍCIO - tribunal:', params.tribunal);
+    try {
+      console.log('[JURIM] 1-INICIO tribunal=' + params.tribunal);
 
-    const cacheKey = cacheKeyJurimetrics(
-      params.tribunal || 'all',
-      params.periodo,
-      { classe: params.classe, assunto: params.assunto }
-    );
-    console.log('🔑 [getJurimetrics] Cache key gerada');
+      const cacheKey = cacheKeyJurimetrics(
+        params.tribunal || 'all',
+        params.periodo,
+        { classe: params.classe, assunto: params.assunto }
+      );
+      console.log('[JURIM] 2-CACHE_KEY');
 
-    // Verificar cache
-    if (this.config.enableCache) {
-      const cached = await this.cache.get<JurimetricsData>(cacheKey);
-      if (cached) {
-        console.log('📦 [LegalDataGateway] Cache hit jurimetria');
-        return cached;
+      // Verificar cache
+      if (this.config.enableCache) {
+        const cached = await this.cache.get<JurimetricsData>(cacheKey);
+        if (cached) {
+          console.log('[JURIM] 2b-CACHE_HIT');
+          return cached;
+        }
       }
-    }
+      console.log('[JURIM] 3-NO_CACHE');
 
-    console.log('📊 [LegalDataGateway] Calculando jurimetria:', {
-      tribunal: params.tribunal,
-      periodo: params.periodo,
-    });
+      // Usar primeiro provider
+      const providerNames = Array.from(this.providers.keys());
+      console.log('[JURIM] 4-PROVIDERS=' + providerNames.join(','));
 
-    // Usar primeiro provider que suporta jurimetria
-    console.log('🔍 [LegalDataGateway] Providers disponíveis:', Array.from(this.providers.keys()));
+      for (const [name, provider] of Array.from(this.providers.entries())) {
+        console.log('[JURIM] 5-CHECKING=' + name);
+        const metadata = provider.getMetadata();
+        const hasJurim = metadata.capabilities.includes('get_jurimetrics');
+        console.log('[JURIM] 6-HAS_JURIM=' + hasJurim);
 
-    for (const [name, provider] of Array.from(this.providers.entries())) {
-      const metadata = provider.getMetadata();
-      console.log(`🔍 [LegalDataGateway] Verificando provider ${name}:`, {
-        capabilities: metadata.capabilities,
-        has_jurimetrics: metadata.capabilities.includes('get_jurimetrics'),
-      });
-
-      if (metadata.capabilities.includes('get_jurimetrics')) {
-        try {
-          console.log(`🔍 [LegalDataGateway] Chamando getJurimetrics em ${name}...`);
+        if (hasJurim) {
+          console.log('[JURIM] 7-CALLING=' + name);
           const jurimetrics = await provider.getJurimetrics(params);
-          console.log(`✅ [LegalDataGateway] Jurimetria obtida de ${name}:`, {
-            total_processos: jurimetrics?.metricas?.total_processos,
-          });
+          console.log('[JURIM] 8-GOT_RESULT total=' + jurimetrics?.metricas?.total_processos);
 
-          // Salvar no cache
           if (this.config.enableCache) {
             await this.cache.set(cacheKey, jurimetrics, CacheTTL.JURIMETRICS);
           }
-
           return jurimetrics;
-        } catch (error) {
-          console.error(`❌ [LegalDataGateway] Erro ao obter jurimetria de ${name}:`, error);
         }
       }
-    }
 
-    // Retornar dados vazios se nenhum provider funcionar
-    throw new Error('Nenhum provider disponível para jurimetria');
+      throw new Error('Nenhum provider disponível para jurimetria');
+    } catch (error) {
+      console.error('[JURIM] ERROR:', error instanceof Error ? error.message : String(error));
+      throw error;
+    }
   }
 
   /**
