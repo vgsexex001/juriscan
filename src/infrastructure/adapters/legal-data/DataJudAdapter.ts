@@ -356,26 +356,20 @@ export class DataJudAdapter implements ILegalDataProvider {
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
     const index = this.getIndex(params.tribunal);
 
-    // Ajustar período para garantir que não buscamos datas futuras
-    // DataJud pode ter defasagem de 6-12 meses nos dados
+    // IMPORTANTE: DataJud tem defasagem significativa nos dados (6-12 meses)
+    // Sempre usar período histórico para garantir que há dados disponíveis
+    // Período padrão: últimos 2 anos completos (ex: 2023-2024 se estamos em 2026)
     const now = new Date();
-    const adjustedFim = params.periodo.fim > now
-      ? new Date(now.getFullYear() - 1, 11, 31)  // Usar fim do ano anterior se data é futura
-      : params.periodo.fim;
+    const currentYear = now.getFullYear();
 
-    const adjustedInicio = params.periodo.inicio;
-
-    // Se período é muito recente, ajustar para 2 anos atrás
-    if (adjustedInicio > adjustedFim) {
-      const twoYearsAgo = new Date(adjustedFim);
-      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-      params.periodo.inicio = twoYearsAgo;
-    }
+    // Usar dados de 2 anos atrás até 1 ano atrás (período com dados consolidados)
+    const adjustedFim = new Date(currentYear - 1, 11, 31);  // 31/12 do ano passado
+    const adjustedInicio = new Date(currentYear - 3, 0, 1);  // 01/01 de 3 anos atrás
 
     const adjustedParams = {
       ...params,
       periodo: {
-        inicio: adjustedInicio > adjustedFim ? new Date(adjustedFim.getFullYear() - 2, 0, 1) : adjustedInicio,
+        inicio: adjustedInicio,
         fim: adjustedFim,
       },
     };
