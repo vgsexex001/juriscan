@@ -228,6 +228,8 @@ export const POST = apiHandler(async (request, { user }) => {
           model: AI_CONFIG.model,
           max_tokens: AI_CONFIG.maxTokens,
           temperature: AI_CONFIG.temperature,
+          presence_penalty: AI_CONFIG.presencePenalty,
+          frequency_penalty: AI_CONFIG.frequencyPenalty,
           // @ts-expect-error - OpenAI SDK types don't support mixed content arrays
           messages: formattedMessages,
           stream: true,
