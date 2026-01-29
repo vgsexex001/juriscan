@@ -3,3 +3,5 @@
  */
 
 export * from './GenerateJurimetricsReportUseCase';
+export * from './GeneratePredictiveAnalysisUseCase';
+export * from './GenerateJudgeProfileUseCase';

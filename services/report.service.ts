@@ -18,7 +18,11 @@ import type {
   REPORT_COSTS,
 } from "@/types/reports";
 import { deductCredits } from "./credit.service";
-import { createGenerateJurimetricsReportUseCase } from "@/src/application/use-cases/reports";
+import {
+  createGenerateJurimetricsReportUseCase,
+  createGeneratePredictiveAnalysisUseCase,
+  createGenerateJudgeProfileUseCase,
+} from "@/src/application/use-cases/reports";
 
 // Re-export costs for use in other files
 export { REPORT_COSTS } from "@/types/reports";
@@ -204,8 +208,11 @@ export async function generateReport(
 
     switch (report.type) {
       case "PREDICTIVE_ANALYSIS":
-        prompt = buildPredictivePrompt(parameters as unknown as PredictiveAnalysisParams);
-        result = await generateWithAI<PredictiveAnalysisResult>(prompt);
+        // Use new UseCase with real data integration
+        result = await generatePredictiveWithRealData(
+          parameters as unknown as PredictiveAnalysisParams,
+          userId
+        );
         break;
 
       case "JURIMETRICS":
@@ -217,8 +224,11 @@ export async function generateReport(
         break;
 
       case "RELATOR_PROFILE":
-        prompt = buildJudgeProfilePrompt(parameters as unknown as JudgeProfileParams);
-        result = await generateWithAI<JudgeProfileResult>(prompt);
+        // Use new UseCase with real data integration
+        result = await generateJudgeProfileWithRealData(
+          parameters as unknown as JudgeProfileParams,
+          userId
+        );
         break;
 
       default:
@@ -359,6 +369,80 @@ async function generateJurimetricsWithRealData(
   }
 
   return jurimetricsResult;
+}
+
+/**
+ * Generate predictive analysis with real data from legal APIs
+ */
+async function generatePredictiveWithRealData(
+  params: PredictiveAnalysisParams,
+  userId: string
+): Promise<PredictiveAnalysisResult> {
+  // Use the new UseCase
+  const useCase = createGeneratePredictiveAnalysisUseCase();
+  const result = await useCase.execute({
+    tipo_acao: params.tipo_acao,
+    tribunal: params.tribunal,
+    argumentos: params.argumentos,
+    pedidos: params.pedidos,
+    valor_causa: params.valor_causa,
+    processo_numero: params.processo_numero,
+    userId,
+  });
+
+  if (!result.success || !result.analysis) {
+    // Fallback to AI-only generation
+    console.warn("[Report] Falling back to AI-only generation for predictive analysis");
+    const prompt = buildPredictivePrompt(params);
+    return generateWithAI<PredictiveAnalysisResult>(prompt);
+  }
+
+  // Convert UseCase result to PredictiveAnalysisResult format
+  return {
+    probabilidade_exito: result.analysis.probabilidade_exito,
+    confianca: result.analysis.confianca,
+    fatores_favoraveis: result.analysis.fatores_favoraveis,
+    fatores_desfavoraveis: result.analysis.fatores_desfavoraveis,
+    jurisprudencia: result.analysis.jurisprudencia,
+    recomendacoes: result.analysis.recomendacoes,
+    riscos: result.analysis.riscos,
+    resumo_executivo: result.analysis.resumo_executivo,
+  };
+}
+
+/**
+ * Generate judge profile with real data from legal APIs
+ */
+async function generateJudgeProfileWithRealData(
+  params: JudgeProfileParams,
+  userId: string
+): Promise<JudgeProfileResult> {
+  // Calculate period if provided
+  const periodo = params.periodo_inicio && params.periodo_fim
+    ? {
+        inicio: new Date(params.periodo_inicio),
+        fim: new Date(params.periodo_fim),
+      }
+    : undefined;
+
+  // Use the new UseCase
+  const useCase = createGenerateJudgeProfileUseCase();
+  const result = await useCase.execute({
+    nome_juiz: params.nome_juiz,
+    tribunal: params.tribunal,
+    periodo,
+    userId,
+  });
+
+  if (!result.success || !result.profile) {
+    // Fallback to AI-only generation
+    console.warn("[Report] Falling back to AI-only generation for judge profile");
+    const prompt = buildJudgeProfilePrompt(params);
+    return generateWithAI<JudgeProfileResult>(prompt);
+  }
+
+  // Return UseCase result (already in correct format)
+  return result.profile;
 }
 
 /**
