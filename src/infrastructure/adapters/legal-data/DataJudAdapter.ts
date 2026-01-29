@@ -580,8 +580,8 @@ export class DataJudAdapter implements ILegalDataProvider {
       filter.push({
         range: {
           dataAjuizamento: {
-            gte: params.periodo.inicio.toISOString().split('T')[0],
-            lte: params.periodo.fim.toISOString().split('T')[0],
+            gte: this.formatDateForDataJud(params.periodo.inicio),
+            lte: this.formatDateForDataJud(params.periodo.fim),
           },
         },
       });
@@ -591,8 +591,8 @@ export class DataJudAdapter implements ILegalDataProvider {
       filter.push({
         range: {
           dataAjuizamento: {
-            gte: `${params.ano}-01-01`,
-            lte: `${params.ano}-12-31`,
+            gte: `${params.ano}0101000000`,
+            lte: `${params.ano}1231235959`,
           },
         },
       });
@@ -623,17 +623,35 @@ export class DataJudAdapter implements ILegalDataProvider {
   }
 
   /**
+   * Formata data para o padrão do DataJud (YYYYMMDDHHmmss)
+   */
+  private formatDateForDataJud(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}${hours}${minutes}${seconds}`;
+  }
+
+  /**
    * Constrói query para jurimetria
    */
   private buildJurimetricsQuery(params: GetJurimetricsParams): object {
     const filter: object[] = [];
 
-    // Período é obrigatório
+    // Período é obrigatório - DataJud usa formato YYYYMMDDHHmmss
+    const inicioFormatted = this.formatDateForDataJud(params.periodo.inicio);
+    const fimFormatted = this.formatDateForDataJud(params.periodo.fim);
+
+    console.log('[DataJud] Filtro de data:', { inicio: inicioFormatted, fim: fimFormatted });
+
     filter.push({
       range: {
         dataAjuizamento: {
-          gte: params.periodo.inicio.toISOString().split('T')[0],
-          lte: params.periodo.fim.toISOString().split('T')[0],
+          gte: inicioFormatted,
+          lte: fimFormatted,
         },
       },
     });
