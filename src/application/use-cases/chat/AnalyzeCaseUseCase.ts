@@ -465,7 +465,11 @@ ${j.valores.media_condenacao > 0 ? `- **Valor médio de condenação:** R$ ${j.v
 ### Distribuição por tipo de ação (dados reais):
 ${top5.map((c, i) => `${i + 1}. **${c.classe}**: ${c.quantidade.toLocaleString('pt-BR')} processos (${(c.percentual * 100).toFixed(1)}%)`).join('\n')}
 
-**Instrução:** Mencione estes números reais na sua resposta. Se o usuário perguntar sobre taxa de procedência e ela não estiver disponível, informe que o DataJud não fornece dados de resultado de julgamento.
+**INSTRUÇÕES OBRIGATÓRIAS PARA A RESPOSTA:**
+1. SEMPRE mencione o total de ${j.total_processos.toLocaleString('pt-BR')} processos analisados no início da resposta
+2. Use os números reais da distribuição por tipo de ação
+3. Se perguntarem sobre taxa de procedência e ela não estiver disponível, informe que o DataJud não fornece dados de resultado de julgamento
+4. Não invente percentuais de sucesso - use apenas os dados fornecidos acima
 `);
       }
     }
