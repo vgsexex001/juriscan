@@ -1,6 +1,7 @@
 "use client";
 
 import { Scale } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import type { ChatAttachment } from "@/types/chat";
 import { ChatFileMessage, ChatImageMessage, ChatAudioMessage } from "./Chat";
 
@@ -67,10 +68,80 @@ export default function ChatMessage({
         <p className="text-primary text-sm font-medium mb-1.5">
           Assistente Jurídico
         </p>
-        <div className="bg-gray-100 rounded-xl rounded-tl-sm p-4">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+        <div className="bg-gray-100 rounded-xl rounded-tl-sm p-4 prose prose-sm prose-gray max-w-none">
+          <ReactMarkdown
+            components={{
+              // Estilizar parágrafos
+              p: ({ children }) => (
+                <p className="text-sm text-gray-700 leading-relaxed mb-2 last:mb-0">
+                  {children}
+                </p>
+              ),
+              // Estilizar negrito
+              strong: ({ children }) => (
+                <strong className="font-semibold text-gray-900">{children}</strong>
+              ),
+              // Estilizar títulos
+              h1: ({ children }) => (
+                <h1 className="text-lg font-bold text-gray-900 mt-3 mb-2">{children}</h1>
+              ),
+              h2: ({ children }) => (
+                <h2 className="text-base font-bold text-gray-900 mt-3 mb-2">{children}</h2>
+              ),
+              h3: ({ children }) => (
+                <h3 className="text-sm font-bold text-gray-800 mt-2 mb-1">{children}</h3>
+              ),
+              // Estilizar listas
+              ul: ({ children }) => (
+                <ul className="list-disc list-inside text-sm text-gray-700 mb-2 space-y-1">
+                  {children}
+                </ul>
+              ),
+              ol: ({ children }) => (
+                <ol className="list-decimal list-inside text-sm text-gray-700 mb-2 space-y-1">
+                  {children}
+                </ol>
+              ),
+              li: ({ children }) => (
+                <li className="text-sm text-gray-700">{children}</li>
+              ),
+              // Estilizar tabelas
+              table: ({ children }) => (
+                <div className="overflow-x-auto my-2">
+                  <table className="min-w-full text-sm border-collapse">
+                    {children}
+                  </table>
+                </div>
+              ),
+              thead: ({ children }) => (
+                <thead className="bg-gray-200">{children}</thead>
+              ),
+              th: ({ children }) => (
+                <th className="px-3 py-2 text-left font-semibold text-gray-800 border border-gray-300">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td className="px-3 py-2 text-gray-700 border border-gray-300">
+                  {children}
+                </td>
+              ),
+              // Estilizar código inline
+              code: ({ children }) => (
+                <code className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">
+                  {children}
+                </code>
+              ),
+              // Estilizar links
+              a: ({ href, children }) => (
+                <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                  {children}
+                </a>
+              ),
+            }}
+          >
             {content}
-          </p>
+          </ReactMarkdown>
 
           {/* Attachments na resposta do assistente (raro, mas possível) */}
           {hasAttachments && (
