@@ -6,6 +6,7 @@ import { chatMessageSchema } from "@/lib/validation/schemas";
 import { deductCredits } from "@/services/credit.service";
 import { dbInsertAndSelect, dbInsert, dbUpdateQuery } from "@/lib/supabase/db";
 import type { ChatAttachment } from "@/types/chat";
+import { createAnalyzeCaseUseCase, type EnrichedContext } from "@/src/application/use-cases/chat/AnalyzeCaseUseCase";
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = "force-dynamic";
@@ -188,11 +189,38 @@ export const POST = apiHandler(async (request, { user }) => {
     attachments?: ChatAttachment[];
   }[];
 
+  // Analisar última mensagem para extrair entidades e buscar dados jurídicos
+  let enrichedContext: EnrichedContext | null = null;
+  try {
+    const analyzeCaseUseCase = createAnalyzeCaseUseCase();
+    const analysisResult = await analyzeCaseUseCase.execute({
+      mensagem: message,
+      userId: user!.id,
+      conversationId: actualConversationId || undefined,
+    });
+
+    if (analysisResult.deve_usar_dados && analysisResult.contexto.contexto_prompt) {
+      enrichedContext = analysisResult.contexto;
+      console.log("📊 [Chat] Contexto jurídico enriquecido:", {
+        entidades: analysisResult.contexto.entidades,
+        processos: analysisResult.dados_utilizados.processos_analisados,
+        tempo_ms: analysisResult.dados_utilizados.tempo_busca_ms,
+      });
+    }
+  } catch (error) {
+    console.warn("⚠️ [Chat] Erro ao analisar caso (continuando sem dados):", error);
+  }
+
   // Format messages for OpenAI
+  // Se temos contexto enriquecido, adicionar ao system prompt
+  const systemPrompt = enrichedContext?.contexto_prompt
+    ? LEGAL_SYSTEM_PROMPT + "\n\n" + enrichedContext.contexto_prompt
+    : LEGAL_SYSTEM_PROMPT;
+
   const formattedMessages: {
     role: "system" | "user" | "assistant";
     content: string | ContentPart[];
-  }[] = [{ role: "system", content: LEGAL_SYSTEM_PROMPT }];
+  }[] = [{ role: "system", content: systemPrompt }];
 
   for (const msg of history) {
     const role = msg.role === "USER" ? "user" : "assistant";
