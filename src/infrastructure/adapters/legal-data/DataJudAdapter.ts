@@ -356,9 +356,45 @@ export class DataJudAdapter implements ILegalDataProvider {
   async getJurimetrics(params: GetJurimetricsParams): Promise<JurimetricsData> {
     const index = this.getIndex(params.tribunal);
 
+    // Ajustar período para garantir que não buscamos datas futuras
+    // DataJud pode ter defasagem de 6-12 meses nos dados
+    const now = new Date();
+    const adjustedFim = params.periodo.fim > now
+      ? new Date(now.getFullYear() - 1, 11, 31)  // Usar fim do ano anterior se data é futura
+      : params.periodo.fim;
+
+    const adjustedInicio = params.periodo.inicio;
+
+    // Se período é muito recente, ajustar para 2 anos atrás
+    if (adjustedInicio > adjustedFim) {
+      const twoYearsAgo = new Date(adjustedFim);
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+      params.periodo.inicio = twoYearsAgo;
+    }
+
+    const adjustedParams = {
+      ...params,
+      periodo: {
+        inicio: adjustedInicio > adjustedFim ? new Date(adjustedFim.getFullYear() - 2, 0, 1) : adjustedInicio,
+        fim: adjustedFim,
+      },
+    };
+
+    console.log('[DataJud] Buscando jurimetria:', {
+      index,
+      periodo_original: {
+        inicio: params.periodo.inicio.toISOString().split('T')[0],
+        fim: params.periodo.fim.toISOString().split('T')[0],
+      },
+      periodo_ajustado: {
+        inicio: adjustedParams.periodo.inicio.toISOString().split('T')[0],
+        fim: adjustedParams.periodo.fim.toISOString().split('T')[0],
+      },
+    });
+
     const body = {
       size: 0,
-      query: this.buildJurimetricsQuery(params),
+      query: this.buildJurimetricsQuery(adjustedParams),
       aggs: {
         total_processos: {
           value_count: { field: 'numeroProcesso.keyword' },
@@ -385,10 +421,18 @@ export class DataJudAdapter implements ILegalDataProvider {
       },
     };
 
+    console.log('[DataJud] Query:', JSON.stringify(body.query, null, 2));
+
     try {
       const response = await this.makeRequest<DataJudSearchResponse>(`${index}/_search`, body);
 
-      return this.mapToJurimetrics(response, params);
+      console.log('[DataJud] Resposta:', {
+        total_hits: response.hits?.total?.value,
+        aggs_keys: Object.keys(response.aggregations || {}),
+        total_processos: (response.aggregations?.total_processos as DataJudAggregation)?.value,
+      });
+
+      return this.mapToJurimetrics(response, adjustedParams);
     } catch (error) {
       console.error('[DataJud] Erro ao buscar jurimetria:', error);
       throw new Error(`Erro ao buscar jurimetria no DataJud: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
