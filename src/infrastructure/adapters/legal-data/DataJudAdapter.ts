@@ -402,13 +402,7 @@ export class DataJudAdapter implements ILegalDataProvider {
         por_orgao: {
           terms: { field: 'orgaoJulgador.nome.keyword', size: 20 },
         },
-        por_mes: {
-          date_histogram: {
-            field: 'dataAjuizamento',
-            calendar_interval: 'month',
-            format: 'yyyy-MM',
-          },
-        },
+        // Removido date_histogram porque dataAjuizamento é string, não date
         valor_causa_stats: {
           stats: { field: 'valorCausa' },
         },
