@@ -300,9 +300,20 @@ export const POST = apiHandler(async (request, { user }) => {
         controller.close();
       } catch (error) {
         console.error("Streaming error:", error);
+
+        let errorMessage = "Erro ao processar mensagem. Tente novamente.";
+        const err = error as Record<string, unknown>;
+        if (err?.code === "ETIMEDOUT" || err?.code === "ECONNABORTED" || err?.type === "request-timeout") {
+          errorMessage = "O servidor demorou muito para responder. Tente novamente.";
+        } else if (err?.status === 429) {
+          errorMessage = "Muitas requisições. Aguarde alguns segundos e tente novamente.";
+        } else if (err?.status === 503) {
+          errorMessage = "Serviço temporariamente indisponível. Tente novamente em alguns instantes.";
+        }
+
         const errorChunk = JSON.stringify({
           type: "error",
-          error: "Erro ao processar mensagem",
+          error: errorMessage,
         });
         controller.enqueue(encoder.encode(`data: ${errorChunk}\n\n`));
         controller.close();

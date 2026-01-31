@@ -21,7 +21,7 @@ import Sidebar from "@/components/Sidebar";
 import ChatMessage from "@/components/ChatMessage";
 import SuggestionCards from "@/components/SuggestionCards";
 import LegalDisclaimerInline from "@/components/LegalDisclaimerInline";
-import { ChatAttachmentPreview, AudioRecorder } from "@/components/Chat";
+import { ChatAttachmentPreview, AudioRecorder, TypingIndicator } from "@/components/Chat";
 import { useConversations, useConversation } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { useCredits } from "@/hooks/useCredits";
@@ -58,7 +58,7 @@ function ChatContent() {
     useConversations();
   const { messages, isLoading: isLoadingMessages } = useConversation(currentConversationId);
   const { balance } = useCredits();
-  const { sendMessage, isStreaming, error: chatError } = useChat({
+  const { sendMessage, isStreaming, isWaiting, error: chatError, retry, clearError } = useChat({
     conversationId: currentConversationId,
     onConversationCreated: (id) => {
       setCurrentConversationId(id);
@@ -89,11 +89,14 @@ function ChatContent() {
   }, [conversationIdParam]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages are added
+    // Scroll to bottom when new messages are added or typing indicator appears
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [messages]);
+  }, [messages, isWaiting]);
 
   // Fechar menu de anexos ao clicar fora
   useEffect(() => {
@@ -311,11 +314,11 @@ function ChatContent() {
           className="flex-1 p-6 pb-48 overflow-y-auto"
           aria-label="Histórico de mensagens"
         >
-          {/* Error Message */}
-          {(chatError || attachmentError) && (
+          {/* Attachment Error */}
+          {attachmentError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{chatError || attachmentError}</span>
+              <span className="text-sm">{attachmentError}</span>
             </div>
           )}
 
@@ -352,45 +355,44 @@ function ChatContent() {
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                type={message.role === "USER" ? "user" : "assistant"}
-                content={message.content}
-                timestamp={new Date(message.created_at).toLocaleTimeString("pt-BR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-                attachments={(message as { attachments?: ChatAttachment[] }).attachments}
-              />
-            ))
+            messages
+              .filter((m) => m.role === "USER" || m.content)
+              .map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  type={message.role === "USER" ? "user" : "assistant"}
+                  content={message.content}
+                  timestamp={new Date(message.created_at).toLocaleTimeString("pt-BR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  attachments={(message as { attachments?: ChatAttachment[] }).attachments}
+                />
+              ))
           )}
 
-          {/* Streaming Indicator */}
-          {isStreaming && (
-            <div className="flex items-start gap-3 mb-6">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <Scale className="w-4 h-4 text-white" strokeWidth={1.5} />
-              </div>
-              <div>
-                <p className="text-primary text-sm font-medium mb-1.5">
-                  Assistente Jurídico
-                </p>
-                <div className="bg-gray-100 rounded-xl rounded-tl-sm p-4">
-                  <div className="flex gap-1">
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
+          {/* Typing Indicator - only while waiting for first chunk */}
+          {isWaiting && <TypingIndicator />}
+
+          {/* Chat Error with Retry */}
+          {chatError && (
+            <div className="mb-4 mx-auto max-w-2xl p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-red-800">{chatError}</p>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={retry}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                  >
+                    Tentar novamente
+                  </button>
+                  <button
+                    onClick={clearError}
+                    className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Dispensar
+                  </button>
                 </div>
               </div>
             </div>

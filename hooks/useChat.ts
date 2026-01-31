@@ -22,19 +22,32 @@ interface MessageWithAttachments extends Message {
   attachments?: ChatAttachment[];
 }
 
+const TIMEOUT_MS = 60000; // 60 segundos
+
 export function useChat({ conversationId, onConversationCreated }: UseChatOptions) {
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false); // Esperando primeiro chunk
   const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastMessageRef = useRef<{ content: string; attachments: ChatAttachment[] } | null>(null);
   const queryClient = useQueryClient();
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   const sendMessage = useCallback(
     async (content: string, attachments: ChatAttachment[] = []) => {
       if ((!content.trim() && attachments.length === 0) || isStreaming) return;
 
+      // Salvar para retry
+      lastMessageRef.current = { content, attachments };
+
       setError(null);
       setIsStreaming(true);
+      setIsWaiting(true);
       setStreamingContent("");
 
       // Add user message to UI immediately
@@ -87,6 +100,11 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
       try {
         abortControllerRef.current = new AbortController();
 
+        // Timeout para evitar loading infinito
+        timeoutRef.current = setTimeout(() => {
+          abortControllerRef.current?.abort();
+        }, TIMEOUT_MS);
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -99,12 +117,14 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error?.message || "Erro ao enviar mensagem");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error?.message || errorData.error || `Erro ${response.status}: Falha ao processar mensagem`
+          );
         }
 
         const reader = response.body?.getReader();
-        if (!reader) throw new Error("No response body");
+        if (!reader) throw new Error("Erro ao ler resposta do servidor");
 
         const decoder = new TextDecoder();
         let accumulatedContent = "";
@@ -123,6 +143,11 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
                 const event: StreamEvent = JSON.parse(line.slice(6));
 
                 if (event.type === "chunk" && event.content) {
+                  // Primeiro chunk recebido — sair do estado "waiting"
+                  if (isWaiting || accumulatedContent === "") {
+                    setIsWaiting(false);
+                  }
+
                   accumulatedContent += event.content;
                   setStreamingContent(accumulatedContent);
 
@@ -169,6 +194,10 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
                   throw new Error(event.error || "Erro durante streaming");
                 }
               } catch (parseError) {
+                // Re-throw if it's our error (not a JSON parse error)
+                if (parseError instanceof Error && parseError.message !== "Unexpected end of JSON input" && !parseError.message.includes("JSON")) {
+                  throw parseError;
+                }
                 // Ignore parse errors for incomplete chunks
               }
             }
@@ -176,19 +205,75 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
-          // User cancelled
+          // Verificar se foi timeout ou cancelamento manual
+          setError("A resposta demorou muito. Tente novamente.");
+          // Remover a mensagem placeholder do assistente
+          if (conversationId) {
+            queryClient.setQueryData(
+              ["conversation", conversationId],
+              (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
+                if (!old) return old;
+                const messages = old.messages.filter(
+                  (m) => !(m.role === "ASSISTANT" && !m.content)
+                );
+                return { ...old, messages };
+              }
+            );
+          }
           return;
         }
         console.error("Chat error:", err);
-        setError(err instanceof Error ? err.message : "Erro desconhecido");
+        setError(err instanceof Error ? err.message : "Erro desconhecido. Tente novamente.");
+
+        // Remover mensagem placeholder vazia do assistente em caso de erro
+        if (conversationId) {
+          queryClient.setQueryData(
+            ["conversation", conversationId],
+            (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
+              if (!old) return old;
+              const messages = old.messages.filter(
+                (m) => !(m.role === "ASSISTANT" && !m.content)
+              );
+              return { ...old, messages };
+            }
+          );
+        }
       } finally {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         setIsStreaming(false);
+        setIsWaiting(false);
         setStreamingContent("");
         abortControllerRef.current = null;
       }
     },
-    [conversationId, isStreaming, onConversationCreated, queryClient]
+    [conversationId, isStreaming, isWaiting, onConversationCreated, queryClient]
   );
+
+  const retry = useCallback(async () => {
+    if (!lastMessageRef.current) return;
+    setError(null);
+
+    // Remover a mensagem do usuário anterior e placeholder do assistente
+    if (conversationId) {
+      queryClient.setQueryData(
+        ["conversation", conversationId],
+        (old: { conversation: unknown; messages: MessageWithAttachments[] } | undefined) => {
+          if (!old) return old;
+          // Remover as últimas mensagens temp (user + assistant vazio)
+          const messages = old.messages.filter(
+            (m) => !m.id.startsWith("temp-")
+          );
+          return { ...old, messages };
+        }
+      );
+    }
+
+    const { content, attachments } = lastMessageRef.current;
+    await sendMessage(content, attachments);
+  }, [conversationId, queryClient, sendMessage]);
 
   const cancelStream = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -197,7 +282,10 @@ export function useChat({ conversationId, onConversationCreated }: UseChatOption
   return {
     sendMessage,
     cancelStream,
+    retry,
+    clearError,
     isStreaming,
+    isWaiting,
     streamingContent,
     error,
   };

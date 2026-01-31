@@ -6,3 +6,4 @@ export { WaveformVisualizer } from "./WaveformVisualizer";
 export { default as ChatFileMessage } from "./ChatFileMessage";
 export { default as ChatImageMessage } from "./ChatImageMessage";
 export { default as ChatAudioMessage } from "./ChatAudioMessage";
+export { default as TypingIndicator } from "./TypingIndicator";
