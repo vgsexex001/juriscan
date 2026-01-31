@@ -221,7 +221,7 @@ export default function PrivacySettings({
                 }`}
               >
                 <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                  className={`absolute left-0 top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
                     preferences[item.id] ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
