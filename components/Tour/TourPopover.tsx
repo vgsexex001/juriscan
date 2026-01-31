@@ -125,11 +125,19 @@ export function TourPopover() {
       setIsVisible(true);
     }, 50);
 
+    // Retry position calculation (e.g. after drawer opens with animation)
+    const retryTimers = [
+      setTimeout(calculatePosition, 200),
+      setTimeout(calculatePosition, 400),
+      setTimeout(calculatePosition, 600),
+    ];
+
     window.addEventListener("resize", calculatePosition);
     window.addEventListener("scroll", calculatePosition, true);
 
     return () => {
       clearTimeout(timer);
+      retryTimers.forEach(clearTimeout);
       window.removeEventListener("resize", calculatePosition);
       window.removeEventListener("scroll", calculatePosition, true);
     };

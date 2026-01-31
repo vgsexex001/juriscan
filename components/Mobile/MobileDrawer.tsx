@@ -6,9 +6,11 @@ interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  /** Prevent closing via overlay click or swipe (used during tour) */
+  preventClose?: boolean;
 }
 
-export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawerProps) {
+export default function MobileDrawer({ isOpen, onClose, children, preventClose = false }: MobileDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const currentXRef = useRef(0);
@@ -41,16 +43,16 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
     };
   }, [isOpen]);
 
-  // Close on ESC
+  // Close on ESC (unless prevented during tour)
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !preventClose) onClose();
     };
     if (isOpen) {
       document.addEventListener("keydown", handleEsc);
     }
     return () => document.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, preventClose]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
@@ -73,11 +75,11 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
     isDraggingRef.current = false;
     const diff = startXRef.current - currentXRef.current;
 
-    if (diff > 80) {
+    if (diff > 80 && !preventClose) {
       onClose();
     }
     drawerRef.current.style.transform = "";
-  }, [onClose]);
+  }, [onClose, preventClose]);
 
   if (!isOpen) return null;
 
@@ -86,14 +88,17 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
       {/* Overlay - covers entire screen */}
       <div
         className="fixed inset-0 z-40 bg-black/50 animate-fade-in"
-        onClick={onClose}
+        onClick={preventClose ? undefined : onClose}
         aria-hidden="true"
       />
 
       {/* Drawer panel - fixed to left edge */}
+      {/* When tour is active (preventClose), raise z-index above tour overlay (z-90) but below popover (z-95) */}
       <div
         ref={drawerRef}
-        className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[85vw] shadow-2xl animate-slide-left"
+        className={`fixed top-0 left-0 bottom-0 w-[280px] max-w-[85vw] shadow-2xl animate-slide-left ${
+          preventClose ? "z-[92]" : "z-50"
+        }`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

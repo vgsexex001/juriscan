@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { TourContext, TourStep } from "./TourContext";
+import { TourContext, TourStep, DrawerControl } from "./TourContext";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
 const TOUR_STEPS: TourStep[] = [
@@ -14,6 +14,7 @@ const TOUR_STEPS: TourStep[] = [
       "Use o menu lateral para acessar todas as funcionalidades do Juriscan. Aqui você encontra o Dashboard, Chat Jurídico, Histórico de Análises e mais.",
     placement: "right",
     spotlightPadding: 8,
+    requiresDrawer: true,
   },
   {
     id: "credits",
@@ -23,6 +24,7 @@ const TOUR_STEPS: TourStep[] = [
       "Acompanhe seu saldo de créditos aqui. Cada análise ou consulta ao chat consome créditos do seu plano.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "dashboard",
@@ -32,6 +34,7 @@ const TOUR_STEPS: TourStep[] = [
       "Visualize um resumo das suas atividades, métricas de uso e análises recentes em um só lugar.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "chat",
@@ -41,6 +44,7 @@ const TOUR_STEPS: TourStep[] = [
       "Converse com nossa IA especializada em direito brasileiro. Tire dúvidas, peça análises e obtenha orientações jurídicas.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "historico",
@@ -50,6 +54,7 @@ const TOUR_STEPS: TourStep[] = [
       "Acesse todas as suas análises anteriores organizadas por data. Nunca perca uma consulta importante.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "relatorios",
@@ -59,6 +64,7 @@ const TOUR_STEPS: TourStep[] = [
       "Gere relatórios detalhados das suas análises em PDF para compartilhar com clientes ou arquivar.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "configuracoes",
@@ -68,6 +74,7 @@ const TOUR_STEPS: TourStep[] = [
       "Personalize sua experiência, gerencie seu plano, altere dados do perfil e configure notificações.",
     placement: "right",
     spotlightPadding: 4,
+    requiresDrawer: true,
   },
   {
     id: "chat-input",
@@ -91,6 +98,12 @@ interface TourProviderProps {
 // Rotas onde o tour NÃO deve aparecer (páginas de autenticação)
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
 
+// Helper to check if we're on mobile (matches useMediaQuery breakpoint)
+function isMobileViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 1024;
+}
+
 export function TourProvider({ children }: TourProviderProps) {
   const pathname = usePathname();
   const [isTourActive, setIsTourActive] = useState(false);
@@ -98,6 +111,15 @@ export function TourProvider({ children }: TourProviderProps) {
   const [hasCompletedTour, setHasCompletedTour] = useState(false); // CORRIGIDO: começa como false
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const drawerControlRef = useRef<DrawerControl | null>(null);
+
+  const registerDrawerControl = useCallback((control: DrawerControl) => {
+    drawerControlRef.current = control;
+  }, []);
+
+  const unregisterDrawerControl = useCallback(() => {
+    drawerControlRef.current = null;
+  }, []);
 
   // Função para verificar se o tour foi completado (com suporte a userId)
   const checkTourCompleted = useCallback((userId: string | null): boolean => {
@@ -219,6 +241,11 @@ export function TourProvider({ children }: TourProviderProps) {
   }, []);
 
   const endTour = useCallback(() => {
+    // Close drawer if it was opened by the tour
+    if (isMobileViewport() && drawerControlRef.current) {
+      drawerControlRef.current.close();
+    }
+
     setIsTourActive(false);
     setHasCompletedTour(true);
 
@@ -263,6 +290,19 @@ export function TourProvider({ children }: TourProviderProps) {
     setIsTourActive(true);
   }, [currentUserId]);
 
+  // Sync drawer state with current tour step on mobile
+  useEffect(() => {
+    if (!isTourActive || !drawerControlRef.current) return;
+    if (!isMobileViewport()) return;
+
+    const step = TOUR_STEPS[currentStepIndex];
+    if (step?.requiresDrawer) {
+      drawerControlRef.current.open();
+    } else {
+      drawerControlRef.current.close();
+    }
+  }, [isTourActive, currentStepIndex]);
+
   const currentStep = isTourActive ? TOUR_STEPS[currentStepIndex] : null;
   const totalSteps = TOUR_STEPS.length;
   const isFirstStep = currentStepIndex === 0;
@@ -286,6 +326,8 @@ export function TourProvider({ children }: TourProviderProps) {
         goToStep,
         skipTour,
         resetTour,
+        registerDrawerControl,
+        unregisterDrawerControl,
         steps: TOUR_STEPS,
         currentStep,
         totalSteps,

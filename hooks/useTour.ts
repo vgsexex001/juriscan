@@ -15,6 +15,8 @@ const defaultTourContext: TourContextType = {
   goToStep: () => {},
   skipTour: () => {},
   resetTour: () => {},
+  registerDrawerControl: () => {},
+  unregisterDrawerControl: () => {},
   steps: [],
   currentStep: null,
   totalSteps: 0,
