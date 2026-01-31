@@ -91,9 +91,13 @@ const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
           {showPasswordToggle && (
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                setShowPassword((prev) => !prev);
+              }}
+              className="absolute right-2 z-10 flex items-center justify-center w-10 h-10 rounded-full text-gray-400 hover:text-gray-600 active:bg-gray-200/50 transition-colors"
               tabIndex={-1}
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
