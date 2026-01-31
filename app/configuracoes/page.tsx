@@ -71,14 +71,14 @@ export default function ConfiguracoesPage() {
         </div>
 
         {/* Settings Layout */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="lg:flex lg:flex-row lg:gap-6">
           {/* Settings Menu */}
-          <div className="w-full lg:w-auto flex-shrink-0">
+          <div className="w-full lg:w-auto flex-shrink-0 mb-6 lg:mb-0">
             <SettingsMenu activeTab={activeTab} onTabChange={handleTabChange} />
           </div>
 
           {/* Settings Content */}
-          <div className={`flex-1 ${
+          <div className={`min-w-0 lg:flex-1 ${
             activeTab === "termos" || activeTab === "plano"
               ? ""
               : "bg-white rounded-xl border border-gray-200 p-4 sm:p-6"
