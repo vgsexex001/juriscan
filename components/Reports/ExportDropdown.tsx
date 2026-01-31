@@ -10,7 +10,9 @@ import {
   Check,
   X,
 } from "lucide-react";
-import PDFViewerModal from "./PDFViewerModal";
+import dynamic from "next/dynamic";
+
+const PDFViewerModal = dynamic(() => import("./PDFViewerModal"), { ssr: false });
 import type {
   Report,
   PredictiveAnalysisResult,

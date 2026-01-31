@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { X, Download, Loader2, FileText } from "lucide-react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface PDFViewerModalProps {
   blob: Blob;
@@ -10,16 +15,43 @@ interface PDFViewerModalProps {
 }
 
 export default function PDFViewerModal({ blob, filename, onClose }: PDFViewerModalProps) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadDone, setDownloadDone] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [fileData, setFileData] = useState<{ data: ArrayBuffer } | null>(null);
 
-  // Create blob URL on mount, revoke on unmount
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Convert blob to ArrayBuffer for react-pdf and create download URL
   useEffect(() => {
+    let cancelled = false;
+    blob.arrayBuffer().then((buffer) => {
+      if (!cancelled) setFileData({ data: buffer });
+    });
     const url = URL.createObjectURL(blob);
     setBlobUrl(url);
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      cancelled = true;
+      URL.revokeObjectURL(url);
+    };
   }, [blob]);
+
+  // Measure container width with ResizeObserver
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Lock body scroll
   useEffect(() => {
@@ -48,6 +80,10 @@ export default function PDFViewerModal({ blob, filename, onClose }: PDFViewerMod
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
+  const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+  }, []);
+
   const handleDownload = () => {
     if (!blobUrl) return;
     setIsDownloading(true);
@@ -71,12 +107,17 @@ export default function PDFViewerModal({ blob, filename, onClose }: PDFViewerMod
         className="flex items-center justify-between px-4 py-3 bg-gray-800 flex-shrink-0"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
           <span className="text-sm font-medium text-white truncate">
             {filename}
           </span>
         </div>
+        {numPages > 0 && (
+          <span className="text-xs text-gray-400 flex-shrink-0 mx-2">
+            {numPages} {numPages === 1 ? "pag." : "pags."}
+          </span>
+        )}
         <button
           onClick={onClose}
           className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white active:text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -87,18 +128,41 @@ export default function PDFViewerModal({ blob, filename, onClose }: PDFViewerMod
       </header>
 
       {/* PDF Content */}
-      <div className="flex-1 overflow-hidden bg-gray-100">
-        {blobUrl ? (
-          <iframe
-            src={`${blobUrl}#toolbar=0&navpanes=0`}
-            className="w-full h-full border-0"
-            title="Visualizador de PDF"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        )}
+      <div ref={scrollRef} className="flex-1 overflow-auto bg-gray-200">
+        <div ref={containerRef} className="w-full">
+          {fileData && containerWidth > 0 ? (
+            <Document
+              file={fileData}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              }
+              error={
+                <div className="flex flex-col items-center justify-center py-20 text-gray-500 text-sm">
+                  <FileText className="w-10 h-10 mb-2 text-gray-400" />
+                  <span>Erro ao carregar PDF</span>
+                </div>
+              }
+            >
+              {Array.from(new Array(numPages), (_, index) => (
+                <div key={`page_${index + 1}`} className="mb-2 last:mb-0">
+                  <Page
+                    pageNumber={index + 1}
+                    width={containerWidth}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                  />
+                </div>
+              ))}
+            </Document>
+          ) : (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action Bar */}

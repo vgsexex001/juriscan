@@ -40,6 +40,11 @@ const nextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    // canvas is an optional Node-only dep of pdfjs-dist; exclude from client bundle
+    config.resolve.alias.canvas = false;
+    return config;
+  },
 };
 
 export default nextConfig;
