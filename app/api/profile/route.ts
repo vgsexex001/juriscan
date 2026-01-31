@@ -12,6 +12,7 @@ const updateProfileSchema = z.object({
   phone: z.string().max(20).optional(),
   law_firm: z.string().max(100).optional(),
   practice_areas: z.array(z.string()).optional(),
+  avatar_url: z.string().url().max(500).optional().nullable(),
 });
 
 // GET /api/profile - Get user profile
@@ -47,6 +48,7 @@ export const PATCH = apiHandler(async (request, { user }) => {
   if (data.phone !== undefined) updateData.phone = data.phone;
   if (data.law_firm !== undefined) updateData.law_firm = data.law_firm;
   if (data.practice_areas !== undefined) updateData.practice_areas = data.practice_areas;
+  if (data.avatar_url !== undefined) updateData.avatar_url = data.avatar_url;
 
   const { data: profile, error } = await supabase
     .from("profiles")

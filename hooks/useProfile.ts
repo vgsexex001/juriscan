@@ -24,6 +24,7 @@ interface ProfileUpdateData {
   phone?: string;
   law_firm?: string;
   practice_areas?: string[];
+  avatar_url?: string | null;
 }
 
 export function useProfile() {
