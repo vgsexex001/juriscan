@@ -27,7 +27,7 @@ export default function AppShell({ children, hideBottomNav = false }: AppShellPr
 
       {/* Mobile Drawer with Sidebar inside */}
       <MobileDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Sidebar onItemClick={() => setDrawerOpen(false)} />
+        <Sidebar onItemClick={() => setDrawerOpen(false)} embedded />
       </MobileDrawer>
 
       {/* Main content area */}

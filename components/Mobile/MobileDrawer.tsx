@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { X } from "lucide-react";
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -15,17 +14,43 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
   const currentXRef = useRef(0);
   const isDraggingRef = useRef(false);
 
-  // Prevent body scroll when drawer is open
+  // Lock body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
       document.body.style.overflow = "";
+      window.scrollTo(0, parseInt(scrollY || "0") * -1);
     }
     return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  // Close on ESC
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", handleEsc);
+    }
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isOpen, onClose]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
@@ -37,6 +62,7 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
     if (!isDraggingRef.current || !drawerRef.current) return;
     currentXRef.current = e.touches[0].clientX;
     const diff = startXRef.current - currentXRef.current;
+    // Only allow dragging left (to close)
     if (diff > 0) {
       drawerRef.current.style.transform = `translateX(-${diff}px)`;
     }
@@ -47,7 +73,7 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
     isDraggingRef.current = false;
     const diff = startXRef.current - currentXRef.current;
 
-    if (diff > 100) {
+    if (diff > 80) {
       onClose();
     }
     drawerRef.current.style.transform = "";
@@ -56,31 +82,25 @@ export default function MobileDrawer({ isOpen, onClose, children }: MobileDrawer
   if (!isOpen) return null;
 
   return (
-    <div className="lg:hidden fixed inset-0 z-50">
-      {/* Overlay */}
+    <div className="lg:hidden">
+      {/* Overlay - covers entire screen */}
       <div
-        className="absolute inset-0 bg-black/50 animate-fade-in"
+        className="fixed inset-0 z-40 bg-black/50 animate-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel - fixed to left edge */}
       <div
         ref={drawerRef}
-        className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] bg-white shadow-xl animate-slide-left"
+        className="fixed top-0 left-0 bottom-0 z-50 w-[280px] max-w-[85vw] shadow-2xl animate-slide-left"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu de navegação"
       >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-2 text-gray-400 hover:text-gray-600 touch-target flex items-center justify-center z-10"
-          style={{ marginTop: "var(--safe-area-top)" }}
-          aria-label="Fechar menu"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {children}
       </div>
     </div>

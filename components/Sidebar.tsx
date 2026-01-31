@@ -29,6 +29,8 @@ interface SidebarProps {
   highlightNavigation?: boolean;
   highlightMenuItem?: string;
   onItemClick?: () => void;
+  /** When true, sidebar fills its parent container instead of being fixed */
+  embedded?: boolean;
 }
 
 export default function Sidebar({
@@ -36,6 +38,7 @@ export default function Sidebar({
   highlightNavigation = false,
   highlightMenuItem,
   onItemClick,
+  embedded = false,
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
@@ -61,7 +64,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside data-tour="sidebar" className="fixed left-0 top-0 h-screen w-60 bg-primary flex flex-col z-10">
+    <aside data-tour="sidebar" className={`${embedded ? "relative h-full w-full" : "fixed left-0 top-0 h-screen w-60"} bg-primary flex flex-col z-10`}>
       {/* Logo */}
       <div className="flex items-center gap-2 p-4">
         <Scale className="w-6 h-6 text-white" strokeWidth={1.5} />
