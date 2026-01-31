@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, Scale } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import SettingsMenu from "@/components/SettingsMenu";
 import ProfileSettings from "@/components/ProfileSettings";
 import NotificationSettings from "@/components/NotificationSettings";
@@ -61,53 +60,33 @@ export default function ConfiguracoesPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Sidebar - Hidden on mobile */}
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
+    <AppShell>
+      <main className="p-4 sm:p-6">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Configurações</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Gerencie suas preferências e dados da conta
+          </p>
+        </div>
 
-      {/* Main Content */}
-      <div className="lg:ml-60 min-h-screen">
-        {/* Mobile Header */}
-        <header className="lg:hidden h-16 bg-white border-b border-gray-200 flex items-center px-4">
-          <button className="p-2 text-gray-500 hover:text-gray-700">
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2 ml-2">
-            <Scale className="w-6 h-6 text-primary" strokeWidth={1.5} />
-            <span className="text-primary text-lg font-semibold">Juriscan</span>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="p-6">
-          {/* Page Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Configurações</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Gerencie suas preferências e dados da conta
-            </p>
+        {/* Settings Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Settings Menu */}
+          <div className="lg:block">
+            <SettingsMenu activeTab={activeTab} onTabChange={handleTabChange} />
           </div>
 
-          {/* Settings Layout */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Settings Menu */}
-            <div className="lg:block">
-              <SettingsMenu activeTab={activeTab} onTabChange={handleTabChange} />
-            </div>
-
-            {/* Settings Content */}
-            <div className={`flex-1 ${
-              activeTab === "termos" || activeTab === "plano"
-                ? ""
-                : "bg-white rounded-xl border border-gray-200 p-6"
-            }`}>
-              {renderSettingsContent()}
-            </div>
+          {/* Settings Content */}
+          <div className={`flex-1 ${
+            activeTab === "termos" || activeTab === "plano"
+              ? ""
+              : "bg-white rounded-xl border border-gray-200 p-4 sm:p-6"
+          }`}>
+            {renderSettingsContent()}
           </div>
-        </main>
-      </div>
-    </div>
+        </div>
+      </main>
+    </AppShell>
   );
 }

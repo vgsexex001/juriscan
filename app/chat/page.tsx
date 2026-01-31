@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  Menu,
-  Scale,
   Brain,
   Paperclip,
   Send,
@@ -16,8 +14,10 @@ import {
   Image as ImageIcon,
   FileText,
   Mic,
+  Scale,
+  Menu,
 } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import ChatMessage from "@/components/ChatMessage";
 import SuggestionCards from "@/components/SuggestionCards";
 import LegalDisclaimerInline from "@/components/LegalDisclaimerInline";
@@ -45,7 +45,7 @@ function ChatContent() {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(
     conversationIdParam
   );
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [showConversations, setShowConversations] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
 
@@ -89,7 +89,6 @@ function ChatContent() {
   }, [conversationIdParam]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages are added or typing indicator appears
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
         top: chatContainerRef.current.scrollHeight,
@@ -98,7 +97,6 @@ function ChatContent() {
     }
   }, [messages, isWaiting]);
 
-  // Fechar menu de anexos ao clicar fora
   useEffect(() => {
     const handleClickOutside = () => setShowAttachMenu(false);
     if (showAttachMenu) {
@@ -115,7 +113,7 @@ function ChatContent() {
   const handleSelectConversation = (id: string) => {
     setCurrentConversationId(id);
     router.push(`/chat?id=${id}`, { scroll: false });
-    setShowSidebar(false);
+    setShowConversations(false);
   };
 
   const handleDeleteConversation = (id: string) => {
@@ -136,13 +134,11 @@ function ChatContent() {
       return;
     }
 
-    // Upload attachments primeiro
     let uploadedAttachments: ChatAttachment[] = [];
     if (attachments.length > 0) {
       uploadedAttachments = await uploadAttachments();
     }
 
-    // Enviar mensagem
     sendMessage(text, uploadedAttachments);
     setInputValue("");
     clearAttachments();
@@ -167,7 +163,6 @@ function ChatContent() {
       await addAttachment(file);
     }
 
-    // Reset input
     if (e.target) e.target.value = "";
     setShowAttachMenu(false);
   };
@@ -183,20 +178,15 @@ function ChatContent() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      {/* Sidebar */}
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Conversations Sidebar */}
-      {showSidebar && (
+    <AppShell hideBottomNav>
+      {/* Mobile Conversations Drawer */}
+      {showConversations && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div
             className="absolute inset-0 bg-black/50"
-            onClick={() => setShowSidebar(false)}
+            onClick={() => setShowConversations(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-80 bg-white shadow-xl">
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl animate-slide-left">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-gray-800">Conversas</h2>
             </div>
@@ -239,39 +229,38 @@ function ChatContent() {
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="lg:ml-60 min-h-screen flex flex-col">
+      {/* Chat layout - fills the available space */}
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-5">
-          {/* Mobile Menu */}
-          <div className="lg:hidden flex items-center gap-2 mb-4">
+        <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+          {/* Mobile conversations toggle */}
+          <div className="lg:hidden flex items-center gap-2 mb-3">
             <button
-              onClick={() => setShowSidebar(true)}
-              className="p-2 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowConversations(true)}
+              className="p-2 -ml-2 text-gray-500 hover:text-gray-700 touch-target flex items-center justify-center"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
-            <Scale className="w-6 h-6 text-primary" strokeWidth={1.5} />
-            <span className="text-primary text-lg font-semibold">Juriscan</span>
+            <span className="text-sm text-gray-500">Conversas</span>
           </div>
 
           {/* Header Content */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-[#EEF2FF] rounded-[10px]">
-                <Brain className="w-6 h-6 text-primary" />
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-800">
+                <h1 className="text-base sm:text-lg font-semibold text-gray-800">
                   Análise Estratégica Jurídica
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
                   IA conversacional especializada em jurimetria e previsão processual
                 </p>
               </div>
             </div>
 
-            {/* Conversation History Toggle (Desktop) */}
+            {/* Desktop new conversation button */}
             <div className="hidden lg:flex items-center gap-2">
               <button
                 onClick={handleNewConversation}
@@ -311,7 +300,7 @@ function ChatContent() {
         {/* Chat Area */}
         <main
           ref={chatContainerRef}
-          className="flex-1 p-6 pb-48 overflow-y-auto"
+          className="flex-1 p-4 sm:p-6 pb-48 overflow-y-auto"
           aria-label="Histórico de mensagens"
         >
           {/* Attachment Error */}
@@ -371,7 +360,7 @@ function ChatContent() {
               ))
           )}
 
-          {/* Typing Indicator - only while waiting for first chunk */}
+          {/* Typing Indicator */}
           {isWaiting && <TypingIndicator />}
 
           {/* Chat Error with Retry */}
@@ -408,7 +397,7 @@ function ChatContent() {
         </main>
 
         {/* Input Area */}
-        <div className="fixed bottom-0 left-0 lg:left-60 right-0 bg-white border-t border-gray-200 p-4 z-10">
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 p-3 sm:p-4">
           <div className="max-w-4xl mx-auto">
             {/* Attachment Preview */}
             {hasAttachments && (
@@ -433,7 +422,7 @@ function ChatContent() {
             ) : (
               <div
                 data-tour="chat-input"
-                className={`flex items-center gap-3 bg-gray-50 border border-gray-200 px-4 py-2 focus-within:border-blue-500 transition-colors ${
+                className={`flex items-center gap-2 sm:gap-3 bg-gray-50 border border-gray-200 px-3 sm:px-4 py-2 focus-within:border-blue-500 transition-colors ${
                   hasAttachments ? "rounded-b-full" : "rounded-full"
                 }`}
               >
@@ -498,13 +487,13 @@ function ChatContent() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Descreva o caso, informe o número do processo ou faça uma pergunta estratégica..."
+                  placeholder="Descreva o caso ou faça uma pergunta..."
                   className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 placeholder-gray-400"
                   disabled={isStreaming || isUploading}
                 />
 
                 {/* Credit Balance */}
-                <span className="text-xs text-gray-400 hidden sm:block">
+                <span className="text-xs text-gray-400 hidden sm:block whitespace-nowrap">
                   {hasAttachments ? `${totalCost} créditos` : `${balance} créditos`}
                 </span>
 
@@ -528,7 +517,7 @@ function ChatContent() {
                     isUploading ||
                     balance < totalCost
                   }
-                  className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                   aria-label="Enviar mensagem"
                 >
                   {isStreaming || isUploading ? (
@@ -545,7 +534,7 @@ function ChatContent() {
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 

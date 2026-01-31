@@ -28,12 +28,14 @@ interface SidebarProps {
   highlightCredits?: boolean;
   highlightNavigation?: boolean;
   highlightMenuItem?: string;
+  onItemClick?: () => void;
 }
 
 export default function Sidebar({
   highlightCredits = false,
   highlightNavigation = false,
   highlightMenuItem,
+  onItemClick,
 }: SidebarProps) {
   const pathname = usePathname();
   const { user, signOut, loading } = useAuth();
@@ -105,6 +107,7 @@ export default function Sidebar({
               href={item.href}
               id={`menu-item-${item.id}`}
               data-tour={item.tourId}
+              onClick={onItemClick}
               className={`flex items-center gap-3 mx-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                 isActive
                   ? "bg-white/15 text-white"

@@ -37,7 +37,7 @@ export default function ChatMessage({
   if (type === "user") {
     return (
       <div className="flex justify-end mb-6">
-        <div className="max-w-[75%]">
+        <div className="max-w-[90%] sm:max-w-[75%]">
           {/* Attachments */}
           {hasAttachments && (
             <div className="flex flex-wrap gap-2 mb-2 justify-end">
@@ -64,7 +64,7 @@ export default function ChatMessage({
       <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
         <Scale className="w-4 h-4 text-white" strokeWidth={1.5} />
       </div>
-      <div className="max-w-[75%]">
+      <div className="max-w-[90%] sm:max-w-[75%]">
         <p className="text-primary text-sm font-medium mb-1.5">
           Assistente Jurídico
         </p>
