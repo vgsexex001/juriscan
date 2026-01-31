@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { TourContext, TourStep, DrawerControl } from "./TourContext";
 import { getSupabaseClient } from "@/lib/supabase/client";
 
@@ -84,6 +84,7 @@ const TOUR_STEPS: TourStep[] = [
       'Digite sua dúvida jurídica aqui e pressione Enter ou clique no botão enviar. Exemplo: "Quais são os requisitos para usucapião?"',
     placement: "top",
     spotlightPadding: 8,
+    navigateTo: "/chat",
   },
 ];
 
@@ -106,6 +107,7 @@ function isMobileViewport(): boolean {
 
 export function TourProvider({ children }: TourProviderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isTourActive, setIsTourActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hasCompletedTour, setHasCompletedTour] = useState(false); // CORRIGIDO: começa como false
@@ -302,6 +304,20 @@ export function TourProvider({ children }: TourProviderProps) {
       drawerControlRef.current.close();
     }
   }, [isTourActive, currentStepIndex]);
+
+  // Navigate to the required page when a step has navigateTo
+  useEffect(() => {
+    if (!isTourActive) return;
+
+    const step = TOUR_STEPS[currentStepIndex];
+    if (!step?.navigateTo) return;
+
+    // Use window.location.pathname for freshest value
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : pathname;
+    if (currentPath === step.navigateTo) return;
+
+    router.push(step.navigateTo);
+  }, [isTourActive, currentStepIndex, pathname, router]);
 
   const currentStep = isTourActive ? TOUR_STEPS[currentStepIndex] : null;
   const totalSteps = TOUR_STEPS.length;

@@ -11,6 +11,8 @@ export interface TourStep {
   spotlightPadding?: number;
   /** Step requires the mobile drawer to be open (sidebar-related steps) */
   requiresDrawer?: boolean;
+  /** Navigate to this path before showing the step */
+  navigateTo?: string;
 }
 
 export interface DrawerControl {

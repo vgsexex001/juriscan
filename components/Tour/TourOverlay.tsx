@@ -47,11 +47,13 @@ export function TourOverlay() {
 
     updateSpotlightPosition();
 
-    // Retry finding target element (e.g. after drawer opens with animation)
+    // Retry finding target element (e.g. after drawer opens with animation or page navigation)
     const retryTimers = [
       setTimeout(updateSpotlightPosition, 100),
       setTimeout(updateSpotlightPosition, 300),
       setTimeout(updateSpotlightPosition, 500),
+      setTimeout(updateSpotlightPosition, 800),
+      setTimeout(updateSpotlightPosition, 1200),
     ];
 
     // Atualizar posição em resize e scroll

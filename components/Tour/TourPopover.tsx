@@ -241,10 +241,12 @@ export function TourPopover() {
       setIsVisible(true);
     }, 100);
 
-    // Retry position calculation (e.g. after drawer opens with animation)
+    // Retry position calculation (e.g. after drawer opens with animation or page navigation)
     const retryTimers = [
       setTimeout(calculatePosition, 300),
       setTimeout(calculatePosition, 500),
+      setTimeout(calculatePosition, 800),
+      setTimeout(calculatePosition, 1200),
     ];
 
     window.addEventListener("resize", calculatePosition);
