@@ -25,6 +25,23 @@ export const GET = apiHandler(async (_request, { user }) => {
   return successResponse({ conversations });
 });
 
+// DELETE /api/conversations - Bulk soft-delete all user's conversations
+export const DELETE = apiHandler(async (_request, { user }) => {
+  const supabase = await createServerSupabaseClient();
+
+  const { error } = await supabase
+    .from("conversations")
+    .update({ status: "DELETED" } as never)
+    .eq("user_id", user!.id)
+    .eq("status", "ACTIVE");
+
+  if (error) {
+    throw new Error("Erro ao excluir conversas");
+  }
+
+  return successResponse({ deleted: true });
+});
+
 // POST /api/conversations - Create a new conversation
 export const POST = apiHandler(async (request, { user }) => {
   const supabase = await createServerSupabaseClient();

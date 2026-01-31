@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   MessageSquare,
   Search,
   Calendar,
   ArrowRight,
   Inbox,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
@@ -15,7 +17,22 @@ import { useConversations } from "@/hooks/useConversations";
 
 export default function HistoricoPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { conversations, isLoading } = useConversations();
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const { conversations, isLoading, deleteConversation, deleteAllConversations, isDeletingAll } = useConversations();
+
+  const handleCloseModal = useCallback(() => {
+    setShowDeleteAllModal(false);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCloseModal();
+    };
+    if (showDeleteAllModal) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [showDeleteAllModal, handleCloseModal]);
 
   // Filter conversations based on search query
   const filteredConversations = conversations.filter((conv) =>
@@ -62,13 +79,24 @@ export default function HistoricoPage() {
               Todas as suas consultas jurídicas
             </p>
           </div>
-          <Link
-            href="/chat"
-            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Nova Consulta
-          </Link>
+          <div className="hidden sm:flex items-center gap-2">
+            {conversations.length > 0 && (
+              <button
+                onClick={() => setShowDeleteAllModal(true)}
+                className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Excluir tudo
+              </button>
+            )}
+            <Link
+              href="/chat"
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" />
+              Nova Consulta
+            </Link>
+          </div>
         </div>
 
         {/* Stats Card */}
@@ -148,7 +176,20 @@ export default function HistoricoPage() {
                       </div>
                     </div>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        deleteConversation(conv.id);
+                      }}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      title="Excluir conversa"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <ArrowRight className="w-5 h-5 text-gray-400" />
+                  </div>
                 </Link>
               );
             })}
@@ -190,6 +231,51 @@ export default function HistoricoPage() {
 
         {/* Legal Disclaimer */}
         <LegalDisclaimer />
+
+        {/* Delete All Confirmation Modal */}
+        {showDeleteAllModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={handleCloseModal}
+          >
+            <div
+              className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Excluir todo o histórico
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                Tem certeza que deseja excluir todas as suas conversas? Esta ação
+                não pode ser desfeita e todas as {conversations.length} conversas
+                serão removidas permanentemente.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    deleteAllConversations();
+                    setShowDeleteAllModal(false);
+                  }}
+                  disabled={isDeletingAll}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition-colors"
+                >
+                  {isDeletingAll ? "Excluindo..." : "Excluir Tudo"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </AppShell>
   );

@@ -123,6 +123,26 @@ export function useConversations() {
     },
   });
 
+  // Delete all conversations
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/conversations", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro ao excluir conversas");
+      }
+
+      const result = await response.json();
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+
   return {
     conversations: data?.conversations || [],
     isLoading,
@@ -134,6 +154,8 @@ export function useConversations() {
     isUpdating: updateMutation.isPending,
     deleteConversation: deleteMutation.mutate,
     isDeleting: deleteMutation.isPending,
+    deleteAllConversations: deleteAllMutation.mutate,
+    isDeletingAll: deleteAllMutation.isPending,
   };
 }
 
