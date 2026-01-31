@@ -114,6 +114,7 @@ export function TourProvider({ children }: TourProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const drawerControlRef = useRef<DrawerControl | null>(null);
+  const isTourActiveRef = useRef(false);
 
   const registerDrawerControl = useCallback((control: DrawerControl) => {
     drawerControlRef.current = control;
@@ -173,9 +174,11 @@ export function TourProvider({ children }: TourProviderProps) {
     // Usar window.location.pathname para evitar closure stale
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : pathname;
     const isAuthRoute = AUTH_ROUTES.includes(currentPath);
-    if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted) {
+    // Don't restart a tour that's already running (e.g. after navigateTo changes pathname)
+    if (!tourCompleted && isLoggedIn && !isAuthRoute && termsAccepted && !isTourActiveRef.current) {
       setCurrentStepIndex(0);
       setIsTourActive(true);
+      isTourActiveRef.current = true;
     }
 
     setIsInitialized(true);
@@ -215,11 +218,12 @@ export function TourProvider({ children }: TourProviderProps) {
 
           // Só iniciar tour automaticamente se termos já foram aceitos
           // Caso contrário, o WelcomeModal irá iniciar o tour após aceite
-          if (!tourCompleted && !isAuthRoute && termsAccepted) {
+          if (!tourCompleted && !isAuthRoute && termsAccepted && !isTourActiveRef.current) {
             setTimeout(() => {
-              if (isMounted) {
+              if (isMounted && !isTourActiveRef.current) {
                 setCurrentStepIndex(0);
                 setIsTourActive(true);
+                isTourActiveRef.current = true;
               }
             }, 500);
           }
@@ -227,6 +231,7 @@ export function TourProvider({ children }: TourProviderProps) {
           setCurrentUserId(null);
           setHasCompletedTour(false);
           setIsTourActive(false);
+          isTourActiveRef.current = false;
         }
       }
     );
@@ -240,6 +245,7 @@ export function TourProvider({ children }: TourProviderProps) {
   const startTour = useCallback(() => {
     setCurrentStepIndex(0);
     setIsTourActive(true);
+    isTourActiveRef.current = true;
   }, []);
 
   const endTour = useCallback(() => {
@@ -249,6 +255,7 @@ export function TourProvider({ children }: TourProviderProps) {
     }
 
     setIsTourActive(false);
+    isTourActiveRef.current = false;
     setHasCompletedTour(true);
 
     // Salvar com userId se disponível
@@ -290,6 +297,7 @@ export function TourProvider({ children }: TourProviderProps) {
     setHasCompletedTour(false);
     setCurrentStepIndex(0);
     setIsTourActive(true);
+    isTourActiveRef.current = true;
   }, [currentUserId]);
 
   // Sync drawer state with current tour step on mobile
