@@ -18,21 +18,27 @@ import { useConversations } from "@/hooks/useConversations";
 export default function HistoricoPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-  const { conversations, isLoading, deleteConversation, deleteAllConversations, isDeletingAll } = useConversations();
+  const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
+  const { conversations, isLoading, deleteConversation, deleteAllConversations, isDeletingAll, isDeleting } = useConversations();
+
+  const activeModal = showDeleteAllModal || deleteOneId !== null;
 
   const handleCloseModal = useCallback(() => {
     setShowDeleteAllModal(false);
+    setDeleteOneId(null);
   }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleCloseModal();
     };
-    if (showDeleteAllModal) {
+    if (activeModal) {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }
-  }, [showDeleteAllModal, handleCloseModal]);
+  }, [activeModal, handleCloseModal]);
+
+  const deleteOneConv = conversations.find((c) => c.id === deleteOneId);
 
   // Filter conversations based on search query
   const filteredConversations = conversations.filter((conv) =>
@@ -181,7 +187,7 @@ export default function HistoricoPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        deleteConversation(conv.id);
+                        setDeleteOneId(conv.id);
                       }}
                       className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Excluir conversa"
@@ -231,6 +237,53 @@ export default function HistoricoPage() {
 
         {/* Legal Disclaimer */}
         <LegalDisclaimer />
+
+        {/* Delete One Confirmation Modal */}
+        {deleteOneId && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            onClick={handleCloseModal}
+          >
+            <div
+              className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Excluir conversa
+                </h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                Tem certeza que deseja excluir a conversa{" "}
+                <span className="font-medium text-gray-900">
+                  &quot;{deleteOneConv?.title || "Conversa sem título"}&quot;
+                </span>
+                ? Esta ação não pode ser desfeita.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    deleteConversation(deleteOneId);
+                    setDeleteOneId(null);
+                  }}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition-colors"
+                >
+                  {isDeleting ? "Excluindo..." : "Excluir"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Delete All Confirmation Modal */}
         {showDeleteAllModal && (
