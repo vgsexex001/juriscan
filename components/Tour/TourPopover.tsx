@@ -166,10 +166,12 @@ export function TourPopover() {
 
   return (
     <div
-      className={`fixed z-[95] bg-white rounded-xl shadow-2xl transition-all duration-300 ${
-        useMobileBottom ? "left-3 right-3" : "w-80"
+      className={`fixed z-[95] bg-white shadow-2xl transition-all duration-300 ${
+        useMobileBottom
+          ? "left-3 right-3 rounded-xl"
+          : "w-80 rounded-xl"
       } ${
-        isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       }`}
       style={{
         top: position.top === "auto" ? undefined : position.top,
@@ -181,70 +183,61 @@ export function TourPopover() {
       {/* Seta apontando para o elemento (hidden in mobile bottom mode) */}
       <Arrow placement={currentStep.placement} hidden={useMobileBottom} />
 
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100">
-        <h3 className="font-semibold text-gray-900">{currentStep.title}</h3>
-        <button
-          onClick={skipTour}
-          className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded hover:bg-gray-100"
-          aria-label="Fechar tour"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <p className="text-sm text-gray-600 leading-relaxed">
-          {currentStep.content}
-        </p>
-      </div>
-
-      {/* Footer */}
-      <div className="flex flex-col gap-3 p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-1.5">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentStepIndex
-                  ? "bg-primary"
-                  : index < currentStepIndex
-                  ? "bg-primary/40"
-                  : "bg-gray-300"
-              }`}
-            />
-          ))}
+      {/* Compact layout */}
+      <div className="p-3">
+        {/* Header + close inline */}
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h3 className="text-sm font-semibold text-gray-900">{currentStep.title}</h3>
+          <button
+            onClick={skipTour}
+            className="p-1 text-gray-400 hover:text-gray-600 transition-colors rounded hover:bg-gray-100 flex-shrink-0 -mt-0.5 -mr-1"
+            aria-label="Fechar tour"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        {/* Navigation buttons */}
+        {/* Content */}
+        <p className="text-xs text-gray-600 leading-relaxed mb-3">
+          {currentStep.content}
+        </p>
+
+        {/* Footer: progress + nav in one row */}
         <div className="flex items-center justify-between gap-2">
-          <button
-            onClick={prevStep}
-            disabled={isFirstStep}
-            className={`flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition-colors ${
-              isFirstStep
-                ? "text-gray-300 cursor-default"
-                : "text-gray-600 hover:text-gray-800 hover:bg-gray-200"
-            }`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Anterior
-          </button>
-          <button
-            onClick={nextStep}
-            className="flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors whitespace-nowrap"
-          >
-            {isLastStep ? (
-              "Concluir"
-            ) : (
-              <>
-                Próximo
-                <ChevronRight className="w-4 h-4" />
-              </>
+          {/* Progress dots */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <div
+                key={index}
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  index === currentStepIndex
+                    ? "w-4 bg-primary"
+                    : index < currentStepIndex
+                    ? "w-1.5 bg-primary/40"
+                    : "w-1.5 bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Navigation buttons */}
+          <div className="flex items-center gap-1">
+            {!isFirstStep && (
+              <button
+                onClick={prevStep}
+                className="p-1.5 text-gray-400 hover:text-gray-700 transition-colors rounded hover:bg-gray-100"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
             )}
-          </button>
+            <button
+              onClick={nextStep}
+              className="flex items-center gap-0.5 px-3 py-1.5 text-xs font-medium text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors whitespace-nowrap"
+            >
+              {isLastStep ? "Concluir" : "Próximo"}
+              {!isLastStep && <ChevronRight className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
       </div>
     </div>

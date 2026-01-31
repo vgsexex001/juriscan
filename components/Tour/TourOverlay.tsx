@@ -85,13 +85,23 @@ export function TourOverlay() {
               left: spotlightPosition.left,
               width: spotlightPosition.width,
               height: spotlightPosition.height,
-              boxShadow: `
-                0 0 0 2px rgba(59, 130, 246, 0.8),
-                0 0 20px 4px rgba(59, 130, 246, 0.3),
-                0 0 40px 8px rgba(59, 130, 246, 0.15)
-              `,
             }}
-          />
+          >
+            {/* Solid visible ring on dark background */}
+            <div
+              className="absolute inset-0 rounded-lg border-2 border-white/80"
+              style={{
+                boxShadow: `
+                  0 0 0 3px rgba(59, 130, 246, 0.9),
+                  inset 0 0 0 0 rgba(255, 255, 255, 0.1),
+                  0 0 20px 4px rgba(59, 130, 246, 0.5),
+                  0 0 40px 8px rgba(59, 130, 246, 0.25)
+                `,
+              }}
+            />
+            {/* Semi-transparent white background to make the item stand out */}
+            <div className="absolute inset-0 rounded-lg bg-white/10" />
+          </div>
         )}
       </>
     );
