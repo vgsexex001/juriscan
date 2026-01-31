@@ -69,10 +69,31 @@ export function TourOverlay() {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
   const isMobileDrawerStep = isMobile && !!currentStep?.requiresDrawer;
 
-  // On mobile drawer steps: simple full-screen overlay (drawer is raised above via z-index)
+  // On mobile drawer steps: full-screen overlay + highlight on target inside drawer
   if (isMobileDrawerStep) {
     return (
-      <div className="fixed inset-0 bg-black/40 z-[90] pointer-events-none transition-opacity duration-300" />
+      <>
+        {/* Dark overlay behind the drawer (z-90 < drawer z-92) */}
+        <div className="fixed inset-0 bg-black/40 z-[90] pointer-events-none transition-opacity duration-300" />
+
+        {/* Highlight on target element, above the drawer (z-93 > drawer z-92) */}
+        {spotlightPosition && (
+          <div
+            className="fixed rounded-lg z-[93] pointer-events-none transition-all duration-300"
+            style={{
+              top: spotlightPosition.top,
+              left: spotlightPosition.left,
+              width: spotlightPosition.width,
+              height: spotlightPosition.height,
+              boxShadow: `
+                0 0 0 2px rgba(59, 130, 246, 0.8),
+                0 0 20px 4px rgba(59, 130, 246, 0.3),
+                0 0 40px 8px rgba(59, 130, 246, 0.15)
+              `,
+            }}
+          />
+        )}
+      </>
     );
   }
 
