@@ -36,28 +36,51 @@ export default function SettingsMenu({
 }: SettingsMenuProps) {
   return (
     <nav
-      className="w-[220px] bg-white rounded-xl border border-gray-200 p-2 h-fit"
       aria-label="Menu de configurações"
     >
-      {menuItems.map((item) => {
-        const isActive = activeTab === item.id;
-        return (
-          <button
-            key={item.id}
-            onClick={() => onTabChange(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-primary text-white"
-                : "text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <item.icon
-              className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-500"}`}
-            />
-            {item.label}
-          </button>
-        );
-      })}
+      {/* Mobile: horizontal scrollable tabs */}
+      <div className="lg:hidden flex gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-hide">
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+                isActive
+                  ? "bg-primary text-white"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              <item.icon className={`w-4 h-4 ${isActive ? "text-white" : "text-gray-500"}`} />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Desktop: vertical sidebar menu */}
+      <div className="hidden lg:block w-[220px] bg-white rounded-xl border border-gray-200 p-2 h-fit">
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-primary text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <item.icon
+                className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-500"}`}
+              />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }

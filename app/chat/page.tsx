@@ -218,7 +218,7 @@ function ChatContent() {
                   </div>
                   <button
                     onClick={() => handleDeleteConversation(conv.id)}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -434,7 +434,7 @@ function ChatContent() {
                       setShowAttachMenu(!showAttachMenu);
                     }}
                     disabled={isStreaming || isUploading}
-                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
+                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
                     aria-label="Anexar arquivo"
                   >
                     <Paperclip className="w-5 h-5" />
@@ -488,7 +488,7 @@ function ChatContent() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Descreva o caso ou faça uma pergunta..."
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 placeholder-gray-400"
+                  className="flex-1 bg-transparent border-none outline-none text-base lg:text-sm text-gray-800 placeholder-gray-400"
                   disabled={isStreaming || isUploading}
                 />
 
@@ -501,7 +501,7 @@ function ChatContent() {
                 <button
                   onClick={() => setIsRecordingAudio(true)}
                   disabled={isStreaming || isUploading}
-                  className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 disabled:opacity-50 rounded-full transition-colors"
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 disabled:opacity-50 rounded-full transition-colors"
                   aria-label="Gravar áudio"
                   title="Gravar áudio"
                 >

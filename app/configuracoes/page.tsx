@@ -73,7 +73,7 @@ export default function ConfiguracoesPage() {
         {/* Settings Layout */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Settings Menu */}
-          <div className="lg:block">
+          <div className="w-full lg:w-auto flex-shrink-0">
             <SettingsMenu activeTab={activeTab} onTabChange={handleTabChange} />
           </div>
 

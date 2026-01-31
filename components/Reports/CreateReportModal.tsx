@@ -192,7 +192,7 @@ export default function CreateReportModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={`${REPORT_TYPE_INFO[selectedType].label} - ${new Date().toLocaleDateString("pt-BR")}`}
-                  className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary"
+                  className="w-full h-12 px-3 border border-gray-200 rounded-lg text-base lg:text-sm focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function CreateReportModal({
                       onChange={(e) => setParameters({ ...parameters, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary resize-none"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-base lg:text-sm focus:outline-none focus:border-primary resize-none"
                     />
                   ) : (
                     <input
@@ -215,7 +215,7 @@ export default function CreateReportModal({
                       value={parameters[field.id] || ""}
                       onChange={(e) => setParameters({ ...parameters, [field.id]: e.target.value })}
                       placeholder={field.placeholder}
-                      className="w-full h-10 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary"
+                      className="w-full h-12 px-3 border border-gray-200 rounded-lg text-base lg:text-sm focus:outline-none focus:border-primary"
                     />
                   )}
                 </div>

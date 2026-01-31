@@ -80,7 +80,7 @@ export default function ReportCard({ report, onView, onDelete, isDeleting }: Rep
         <button
           onClick={() => onDelete(report.id)}
           disabled={isDeleting}
-          className="px-3 py-2 bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 rounded-lg transition-colors disabled:opacity-50"
+          className="px-3 py-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 rounded-lg transition-colors disabled:opacity-50"
         >
           {isDeleting ? (
             <Loader2 className="w-4 h-4 animate-spin" />

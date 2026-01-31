@@ -85,19 +85,19 @@ export default function HistoricoPage() {
               Todas as suas consultas jurídicas
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {conversations.length > 0 && (
               <button
                 onClick={() => setShowDeleteAllModal(true)}
-                className="flex items-center gap-2 px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg transition-colors"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 gap-2 px-3 sm:px-4 py-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-                Excluir tudo
+                <span className="hidden sm:inline">Excluir tudo</span>
               </button>
             )}
             <Link
               href="/chat"
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
             >
               <MessageSquare className="w-4 h-4" />
               Nova Consulta
@@ -129,7 +129,7 @@ export default function HistoricoPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar conversas..."
-              className="w-full h-11 pl-12 pr-4 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary"
+              className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-lg text-base lg:text-sm focus:outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function HistoricoPage() {
                         e.stopPropagation();
                         setDeleteOneId(conv.id);
                       }}
-                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                       title="Excluir conversa"
                     >
                       <Trash2 className="w-4 h-4" />
