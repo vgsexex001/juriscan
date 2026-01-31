@@ -1,333 +1,256 @@
 "use client";
 
 import { useState } from "react";
-import { Scale, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { User, Mail, Lock, Loader2, AlertCircle, CheckCircle, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import AuthLayout from "@/components/Auth/AuthLayout";
+import AuthInput from "@/components/Auth/AuthInput";
+import PasswordStrength from "@/components/Auth/PasswordStrength";
+import SocialButton from "@/components/Auth/SocialButton";
+import { cn } from "@/lib/utils/cn";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const { signUp, loading } = useAuth();
+
+  const clearFieldError = (field: string) => {
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validate = () => {
+    const errors: Record<string, string> = {};
+    if (!fullName.trim()) errors.fullName = "Nome e obrigatorio";
+    if (!email) errors.email = "E-mail e obrigatorio";
+    else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "E-mail invalido";
+    if (!password) errors.password = "Senha e obrigatoria";
+    else if (password.length < 6) errors.password = "Minimo 6 caracteres";
+    if (password !== confirmPassword) errors.confirmPassword = "As senhas nao coincidem";
+    if (!acceptTerms) errors.acceptTerms = "Voce deve aceitar os termos";
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
+    setFieldErrors({});
 
-    // Validações
-    if (!fullName || !email || !password || !confirmPassword) {
-      setError("Por favor, preencha todos os campos.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
-      return;
-    }
+    if (!validate()) return;
 
     const result = await signUp({ email, password, name: fullName });
 
     if (result.error) {
-      // Traduzir mensagens de erro comuns
       if (result.error.includes("already registered")) {
-        setError("Este e-mail já está cadastrado.");
+        setError("Este e-mail ja esta cadastrado.");
       } else if (result.error.includes("invalid email")) {
-        setError("E-mail inválido.");
+        setError("E-mail invalido.");
       } else if (result.error.includes("password")) {
         setError("A senha deve ter pelo menos 6 caracteres.");
-      } else if (result.error.toLowerCase().includes("rate limit") || result.error.toLowerCase().includes("email rate limit")) {
-        setError("Muitas tentativas de cadastro. Por favor, aguarde alguns minutos e tente novamente.");
-      } else if (result.error.includes("over_email_send_rate_limit")) {
-        setError("Limite de envio de e-mails atingido. Aguarde alguns minutos antes de tentar novamente.");
+      } else if (
+        result.error.toLowerCase().includes("rate limit") ||
+        result.error.toLowerCase().includes("email rate limit") ||
+        result.error.includes("over_email_send_rate_limit")
+      ) {
+        setError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
       } else {
         setError(result.error);
       }
     } else if (result.message) {
-      // Email de confirmação enviado
       setSuccess(result.message);
     }
   };
 
+  const handleSocialLogin = async (provider: "google" | "apple") => {
+    console.log("Register com", provider);
+  };
+
   return (
-    <div className="min-h-screen flex">
-      {/* Left Section - Register Form */}
-      <div className="w-full lg:w-1/2 bg-white flex justify-center px-6 lg:px-10 pt-[67.5px]">
-        <div className="w-full max-w-[448px]">
-          {/* Header */}
-          <div>
-            <h2
-              className="text-text-dark"
-              style={{
-                fontSize: "30px",
-                lineHeight: "36px",
-                letterSpacing: "0.4px",
-              }}
-            >
-              Criar conta
-            </h2>
-            <p
-              className="text-text-gray mt-2"
-              style={{
-                fontSize: "16px",
-                lineHeight: "24px",
-              }}
-            >
-              Comece sua análise jurídica com IA
-            </p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
-              <CheckCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">{success}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            {/* Full Name Field */}
-            <div>
-              <label
-                htmlFor="fullName"
-                className="block text-text-label"
-                style={{
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                }}
-              >
-                Nome completo
-              </label>
-              <input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Seu nome"
-                disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
-                style={{
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                }}
-              />
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-text-label"
-                style={{
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                }}
-              >
-                E-mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
-                style={{
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                }}
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-text-label"
-                style={{
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                }}
-              >
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
-                style={{
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                }}
-              />
-            </div>
-
-            {/* Confirm Password Field */}
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-text-label"
-                style={{
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                }}
-              >
-                Confirmar senha
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={loading || !!success}
-                className="mt-1 w-full h-[50px] px-4 bg-white border border-border rounded-input text-text-input placeholder:text-gray-400 focus:outline-none focus:border-primary disabled:bg-gray-50 disabled:cursor-not-allowed"
-                style={{
-                  fontSize: "16px",
-                  lineHeight: "24px",
-                }}
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading || !!success}
-              className="w-full h-12 bg-primary hover:bg-primary-hover text-white rounded-button transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{
-                fontSize: "16px",
-                lineHeight: "24px",
-              }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Criando conta...
-                </>
-              ) : (
-                "Criar conta"
-              )}
-            </button>
-          </form>
-
-          {/* Footer - Login Link */}
-          <div
-            className="mt-6 text-center"
-            style={{
-              fontSize: "16px",
-              lineHeight: "24px",
-            }}
-          >
-            <span className="text-text-gray">Já tem uma conta? </span>
-            <Link href="/login" className="text-link hover:underline">
-              Faça login
-            </Link>
-          </div>
-
-          {/* Terms Text */}
-          <p
-            className="mt-6 text-center text-text-muted"
-            style={{
-              fontSize: "12px",
-              lineHeight: "16px",
-            }}
-          >
-            Ao criar uma conta, você concorda com nossos{" "}
-            <Link href="/terms" className="text-link hover:underline">
-              Termos de Serviço
-            </Link>{" "}
-            e{" "}
-            <Link href="/privacy" className="text-link hover:underline">
-              Política de Privacidade
-            </Link>
-          </p>
+    <AuthLayout
+      title="Criar conta"
+      subtitle="Comece sua analise juridica com IA"
+      showBackButton
+      onBack={() => router.push("/login")}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Desktop title */}
+        <div className="hidden lg:block text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Criar conta</h1>
+          <p className="mt-2 text-gray-500">Comece sua jornada com analise juridica avancada</p>
         </div>
-      </div>
 
-      {/* Right Section - Hero */}
-      <div
-        className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12"
-        style={{
-          background: "linear-gradient(135deg, #1C398E 0%, #193CB8 50%, #162456 100%)",
-        }}
-      >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/20" />
+        {/* General error */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-red-600 text-sm animate-shake">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center text-center">
-          {/* Logo */}
-          <Scale className="w-20 h-20 text-white" strokeWidth={1.5} />
+        {/* Success */}
+        {success && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2 text-green-700 text-sm animate-fade-in">
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            {success}
+          </div>
+        )}
 
-          {/* Brand Name */}
-          <h1
-            className="text-white font-normal tracking-wide mt-6"
-            style={{
-              fontSize: "48px",
-              lineHeight: "48px",
-              letterSpacing: "0.35px",
-            }}
-          >
-            Juriscan
-          </h1>
-
-          {/* Tagline */}
-          <p
-            className="text-light-blue mt-4 text-center"
-            style={{
-              fontSize: "20px",
-              lineHeight: "28px",
-            }}
-          >
-            Plataforma de Jurimetria, IA Jurídica e Automação
-          </p>
-
-          {/* Features */}
-          <ul className="mt-14 space-y-4">
-            {[
-              "Análise preditiva com IA conversacional",
-              "Jurimetria avançada por tribunal, juiz e relator",
-              "Relatórios automáticos e execução integrada",
-            ].map((feature, index) => (
-              <li key={index} className="flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-feature-blue flex-shrink-0" />
-                <span
-                  className="text-light-blue"
-                  style={{
-                    fontSize: "16px",
-                    lineHeight: "24px",
-                  }}
-                >
-                  {feature}
-                </span>
-              </li>
-            ))}
-          </ul>
+        {/* Name */}
+        <div className="animate-fade-in-up" style={{ animationDelay: "100ms" }}>
+          <AuthInput
+            label="Nome completo"
+            type="text"
+            value={fullName}
+            onChange={(e) => { setFullName(e.target.value); clearFieldError("fullName"); }}
+            icon={<User className="w-5 h-5" />}
+            error={fieldErrors.fullName}
+            autoComplete="name"
+            disabled={loading || !!success}
+          />
         </div>
-      </div>
-    </div>
+
+        {/* Email */}
+        <div className="animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+          <AuthInput
+            label="E-mail"
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); clearFieldError("email"); }}
+            icon={<Mail className="w-5 h-5" />}
+            error={fieldErrors.email}
+            autoComplete="email"
+            disabled={loading || !!success}
+          />
+        </div>
+
+        {/* Password */}
+        <div className="animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+          <AuthInput
+            label="Senha"
+            type="password"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); clearFieldError("password"); }}
+            icon={<Lock className="w-5 h-5" />}
+            error={fieldErrors.password}
+            showPasswordToggle
+            autoComplete="new-password"
+            disabled={loading || !!success}
+          />
+          <PasswordStrength password={password} />
+        </div>
+
+        {/* Confirm Password */}
+        <div className="animate-fade-in-up" style={{ animationDelay: "250ms" }}>
+          <AuthInput
+            label="Confirmar senha"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError("confirmPassword"); }}
+            icon={<Lock className="w-5 h-5" />}
+            error={fieldErrors.confirmPassword}
+            success={confirmPassword.length > 0 && password === confirmPassword}
+            showPasswordToggle
+            autoComplete="new-password"
+            disabled={loading || !!success}
+          />
+        </div>
+
+        {/* Terms */}
+        <div className="animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <div className="relative mt-0.5">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => { setAcceptTerms(e.target.checked); clearFieldError("acceptTerms"); }}
+                className="sr-only"
+                disabled={loading || !!success}
+              />
+              <div
+                className={cn(
+                  "w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center",
+                  acceptTerms ? "bg-blue-600 border-blue-600" : "border-gray-300 bg-white",
+                  fieldErrors.acceptTerms && "border-red-500"
+                )}
+              >
+                {acceptTerms && <Check className="w-3 h-3 text-white" />}
+              </div>
+            </div>
+            <span className="text-sm text-gray-600">
+              Li e aceito os{" "}
+              <Link href="/terms" className="text-blue-600 hover:underline">
+                Termos de Uso
+              </Link>{" "}
+              e a{" "}
+              <Link href="/privacy" className="text-blue-600 hover:underline">
+                Politica de Privacidade
+              </Link>
+            </span>
+          </label>
+          {fieldErrors.acceptTerms && (
+            <p className="mt-1 text-sm text-red-500">{fieldErrors.acceptTerms}</p>
+          )}
+        </div>
+
+        {/* Submit */}
+        <div className="animate-fade-in-up pt-2" style={{ animationDelay: "350ms" }}>
+          <button
+            type="submit"
+            disabled={loading || !!success}
+            className={cn(
+              "w-full h-14 rounded-xl font-semibold text-white",
+              "bg-gradient-to-r from-blue-600 to-blue-700",
+              "hover:from-blue-700 hover:to-blue-800",
+              "transition-all duration-200",
+              "hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25",
+              "active:scale-[0.98]",
+              "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
+              "flex items-center justify-center gap-2"
+            )}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Criando conta...
+              </>
+            ) : (
+              "Criar conta"
+            )}
+          </button>
+        </div>
+
+        {/* Divider */}
+        <div className="relative flex items-center gap-4 py-2 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm text-gray-400">ou</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Social */}
+        <div className="grid grid-cols-2 gap-3 animate-fade-in-up" style={{ animationDelay: "400ms" }}>
+          <SocialButton provider="google" onClick={() => handleSocialLogin("google")} disabled={loading || !!success} />
+          <SocialButton provider="apple" onClick={() => handleSocialLogin("apple")} disabled={loading || !!success} />
+        </div>
+
+        {/* Login link */}
+        <p className="text-center text-gray-600 animate-fade-in-up" style={{ animationDelay: "500ms" }}>
+          Ja tem uma conta?{" "}
+          <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            Fazer login
+          </Link>
+        </p>
+      </form>
+    </AuthLayout>
   );
 }

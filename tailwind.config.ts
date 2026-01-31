@@ -62,6 +62,29 @@ const config: Config = {
           from: { opacity: "1" },
           to: { opacity: "0" },
         },
+        "fade-in-up": {
+          from: { opacity: "0", transform: "translateY(20px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-4px)" },
+          "20%, 40%, 60%, 80%": { transform: "translateX(4px)" },
+        },
+        "bounce-subtle": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)" },
+        },
+        "float-1": {
+          "0%, 100%": { transform: "translate(0, 0) rotate(0deg)" },
+          "33%": { transform: "translate(30px, -30px) rotate(120deg)" },
+          "66%": { transform: "translate(-20px, 20px) rotate(240deg)" },
+        },
+        "float-2": {
+          "0%, 100%": { transform: "translate(0, 0) rotate(0deg)" },
+          "33%": { transform: "translate(-30px, 20px) rotate(-120deg)" },
+          "66%": { transform: "translate(20px, -30px) rotate(-240deg)" },
+        },
       },
       animation: {
         "slide-up": "slide-up 0.3s ease-out",
@@ -70,6 +93,11 @@ const config: Config = {
         "slide-right": "slide-right 0.3s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
         "fade-out": "fade-out 0.2s ease-out",
+        "fade-in-up": "fade-in-up 0.5s ease-out both",
+        shake: "shake 0.5s ease-in-out",
+        "bounce-subtle": "bounce-subtle 0.6s ease-in-out",
+        "float-1": "float-1 20s ease-in-out infinite",
+        "float-2": "float-2 25s ease-in-out infinite",
       },
     },
   },
