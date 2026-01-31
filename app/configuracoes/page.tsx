@@ -79,9 +79,9 @@ export default function ConfiguracoesPage() {
 
           {/* Settings Content */}
           <div className={`min-w-0 lg:flex-1 ${
-            activeTab === "termos" || activeTab === "plano"
-              ? ""
-              : "bg-white rounded-xl border border-gray-200 p-4 sm:p-6"
+            activeTab === "perfil" || activeTab === "notificacoes"
+              ? "bg-white rounded-xl border border-gray-200 p-4 sm:p-6"
+              : ""
           }`}>
             {renderSettingsContent()}
           </div>
