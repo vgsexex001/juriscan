@@ -136,13 +136,13 @@ export default function NotificationSettings({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-6">
         Preferências de Notificação
       </h2>
 
       {/* Toggle List */}
-      <div className="flex-1 max-w-2xl">
+      <div>
         {notificationItems.map((item, index) => (
           <div
             key={item.id}
@@ -179,19 +179,19 @@ export default function NotificationSettings({
 
       {/* Feedback Messages */}
       {error && (
-        <div className="max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="max-w-2xl bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <p className="text-sm text-green-700">Preferências salvas com sucesso!</p>
         </div>
       )}
 
       {/* Save Button */}
-      <div className="flex justify-end pt-6 mt-6 border-t border-gray-100 max-w-2xl">
+      <div className="flex justify-end pt-6 mt-6 border-t border-gray-100">
         <button
           onClick={handleSave}
           disabled={isSaving}

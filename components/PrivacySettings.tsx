@@ -201,9 +201,9 @@ export default function PrivacySettings({
           {privacyToggles.map((item) => (
             <div
               key={item.id}
-              className="flex items-center justify-between py-4"
+              className="flex items-center justify-between py-4 gap-4"
             >
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">{item.title}</p>
                 <p className="text-[13px] text-gray-500 mt-1">
                   {item.description}
@@ -216,7 +216,7 @@ export default function PrivacySettings({
                 aria-checked={preferences[item.id]}
                 aria-label={`Alternar ${item.title}`}
                 onClick={() => handleToggle(item.id)}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${
                   preferences[item.id] ? "bg-primary" : "bg-gray-300"
                 }`}
               >
