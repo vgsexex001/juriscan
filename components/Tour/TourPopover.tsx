@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTour } from "@/hooks/useTour";
+import { findVisibleElement } from "./tourUtils";
 
 interface PopoverPosition {
   top: number | "auto";
@@ -83,7 +84,7 @@ export function TourPopover() {
 
     setUseMobileBottom(false);
 
-    const targetElement = document.querySelector(currentStep.target);
+    const targetElement = findVisibleElement(currentStep.target);
     if (!targetElement) return;
 
     const rect = targetElement.getBoundingClientRect();

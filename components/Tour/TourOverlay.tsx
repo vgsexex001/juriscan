@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTour } from "@/hooks/useTour";
+import { findVisibleElement } from "./tourUtils";
 
 interface SpotlightPosition {
   top: number;
@@ -21,7 +22,7 @@ export function TourOverlay() {
       return;
     }
 
-    const targetElement = document.querySelector(currentStep.target);
+    const targetElement = findVisibleElement(currentStep.target);
     if (!targetElement) {
       setSpotlightPosition(null);
       return;
