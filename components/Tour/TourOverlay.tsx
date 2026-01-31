@@ -108,7 +108,12 @@ export function TourOverlay() {
     );
   }
 
-  if (!spotlightPosition) return null;
+  // No spotlight target found — show a plain dim overlay so the centered popover still looks good
+  if (!spotlightPosition) {
+    return (
+      <div className="fixed inset-0 bg-black/30 z-[90] pointer-events-none transition-opacity duration-300" />
+    );
+  }
 
   // Estilo do overlay - escurecimento suave (30% opacity, sem blur)
   const overlayClass = "fixed bg-black/30 z-[90] pointer-events-none transition-all duration-300";
