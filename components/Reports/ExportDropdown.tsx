@@ -10,6 +10,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import PDFViewerModal from "./PDFViewerModal";
 import type {
   Report,
   PredictiveAnalysisResult,
@@ -57,6 +58,7 @@ export default function ExportDropdown({ report, result }: ExportDropdownProps) 
     txt: "idle",
     pdf: "idle",
   });
+  const [pdfViewer, setPdfViewer] = useState<{ blob: Blob; filename: string } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,7 +93,8 @@ export default function ExportDropdown({ report, result }: ExportDropdownProps) 
           // Dynamic import to avoid loading jspdf until needed
           const { generatePDF } = await import("@/lib/export/pdf-generator");
           const blob = generatePDF(report, result);
-          downloadBlob(blob, filename);
+          setPdfViewer({ blob, filename });
+          setIsOpen(false);
         }
 
         setStatus((prev) => ({ ...prev, [format]: "success" }));
@@ -175,6 +178,13 @@ export default function ExportDropdown({ report, result }: ExportDropdownProps) 
             </button>
           ))}
         </div>
+      )}
+      {pdfViewer && (
+        <PDFViewerModal
+          blob={pdfViewer.blob}
+          filename={pdfViewer.filename}
+          onClose={() => setPdfViewer(null)}
+        />
       )}
     </div>
   );
