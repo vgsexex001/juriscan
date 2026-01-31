@@ -49,7 +49,7 @@ export default function ChatInput({
           {/* Attach Button */}
           <button
             onClick={handleFileUpload}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
             aria-label="Anexar arquivo"
           >
             <Paperclip className="w-5 h-5" />
@@ -63,14 +63,14 @@ export default function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Descreva o caso, informe o número do processo ou faça uma pergunta estratégica..."
-            className="flex-1 bg-transparent border-none outline-none text-base lg:text-sm text-gray-800 placeholder-gray-400"
+            className="flex-1 min-w-0 bg-transparent border-none outline-none text-base lg:text-sm text-gray-800 placeholder-gray-400"
             disabled={isLoading}
           />
 
           {/* Voice Button */}
           <button
             onClick={handleVoiceRecord}
-            className={`p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
+            className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${
               isRecording
                 ? "text-red-500 bg-red-50"
                 : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
@@ -84,7 +84,7 @@ export default function ChatInput({
           <button
             onClick={handleSend}
             disabled={!message.trim() || isLoading}
-            className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
+            className="flex-shrink-0 w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors"
             aria-label="Enviar mensagem"
           >
             <Send className="w-4 h-4 text-white" />
