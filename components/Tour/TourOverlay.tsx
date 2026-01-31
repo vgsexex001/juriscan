@@ -64,7 +64,19 @@ export function TourOverlay() {
     };
   }, [isTourActive, updateSpotlightPosition]);
 
-  if (!isTourActive || !spotlightPosition) return null;
+  if (!isTourActive) return null;
+
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+  const isMobileDrawerStep = isMobile && !!currentStep?.requiresDrawer;
+
+  // On mobile drawer steps: simple full-screen overlay (drawer is raised above via z-index)
+  if (isMobileDrawerStep) {
+    return (
+      <div className="fixed inset-0 bg-black/40 z-[90] pointer-events-none transition-opacity duration-300" />
+    );
+  }
+
+  if (!spotlightPosition) return null;
 
   // Estilo do overlay - escurecimento suave (30% opacity, sem blur)
   const overlayClass = "fixed bg-black/30 z-[90] pointer-events-none transition-all duration-300";

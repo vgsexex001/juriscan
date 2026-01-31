@@ -5,12 +5,17 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTour } from "@/hooks/useTour";
 
 interface PopoverPosition {
-  top: number;
-  left: number;
+  top: number | "auto";
+  left: number | "auto";
+  bottom: number | "auto";
+  right: number | "auto";
 }
 
-// Componente da seta
-function Arrow({ placement }: { placement: string }) {
+const INITIAL_POSITION: PopoverPosition = { top: 0, left: 0, bottom: "auto", right: "auto" };
+
+// Componente da seta (hidden on mobile bottom-sheet mode)
+function Arrow({ placement, hidden }: { placement: string; hidden?: boolean }) {
+  if (hidden) return null;
   const baseClass = "absolute w-3 h-3 bg-white transform rotate-45";
 
   switch (placement) {
@@ -60,11 +65,23 @@ export function TourPopover() {
     skipTour,
   } = useTour();
 
-  const [position, setPosition] = useState<PopoverPosition>({ top: 0, left: 0 });
+  const [position, setPosition] = useState<PopoverPosition>(INITIAL_POSITION);
   const [isVisible, setIsVisible] = useState(false);
+  const [useMobileBottom, setUseMobileBottom] = useState(false);
 
   const calculatePosition = useCallback(() => {
     if (!currentStep) return;
+
+    const isMobile = window.innerWidth < 1024;
+
+    // On mobile, when step requires drawer, use bottom-sheet positioning
+    if (isMobile && currentStep.requiresDrawer) {
+      setUseMobileBottom(true);
+      setPosition({ top: "auto", left: 12, bottom: 12, right: 12 });
+      return;
+    }
+
+    setUseMobileBottom(false);
 
     const targetElement = document.querySelector(currentStep.target);
     if (!targetElement) return;
@@ -110,7 +127,7 @@ export function TourPopover() {
       top = viewportHeight - popoverHeight - 16;
     }
 
-    setPosition({ top, left });
+    setPosition({ top, left, bottom: "auto", right: "auto" });
   }, [currentStep]);
 
   useEffect(() => {
@@ -119,17 +136,19 @@ export function TourPopover() {
       return;
     }
 
+    // Reset visibility on step change for smooth transition
+    setIsVisible(false);
+
     // Aguardar um frame para garantir que o elemento alvo esteja renderizado
     const timer = setTimeout(() => {
       calculatePosition();
       setIsVisible(true);
-    }, 50);
+    }, 100);
 
     // Retry position calculation (e.g. after drawer opens with animation)
     const retryTimers = [
-      setTimeout(calculatePosition, 200),
-      setTimeout(calculatePosition, 400),
-      setTimeout(calculatePosition, 600),
+      setTimeout(calculatePosition, 300),
+      setTimeout(calculatePosition, 500),
     ];
 
     window.addEventListener("resize", calculatePosition);
@@ -147,16 +166,20 @@ export function TourPopover() {
 
   return (
     <div
-      className={`fixed z-[95] w-80 bg-white rounded-xl shadow-2xl transition-all duration-300 ${
+      className={`fixed z-[95] bg-white rounded-xl shadow-2xl transition-all duration-300 ${
+        useMobileBottom ? "left-3 right-3" : "w-80"
+      } ${
         isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
       }`}
       style={{
-        top: position.top,
-        left: position.left,
+        top: position.top === "auto" ? undefined : position.top,
+        left: useMobileBottom ? undefined : (position.left === "auto" ? undefined : position.left),
+        bottom: position.bottom === "auto" ? undefined : position.bottom,
+        right: useMobileBottom ? undefined : (position.right === "auto" ? undefined : position.right),
       }}
     >
-      {/* Seta apontando para o elemento */}
-      <Arrow placement={currentStep.placement} />
+      {/* Seta apontando para o elemento (hidden in mobile bottom mode) */}
+      <Arrow placement={currentStep.placement} hidden={useMobileBottom} />
 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-100">

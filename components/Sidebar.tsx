@@ -44,19 +44,26 @@ export default function Sidebar({
   const { user, signOut, loading } = useAuth();
   const { balance, isLoading: isLoadingCredits } = useCredits();
 
+  // Helper: valida se string é um nome utilizável (não vazio, não "undefined")
+  const isValidName = (name: unknown): name is string =>
+    typeof name === "string" && name.trim() !== "" && name.trim().toLowerCase() !== "undefined";
+
   // Extrair iniciais do nome do usuário
   const getUserInitials = () => {
-    const name = user?.user_metadata?.name || user?.email || "U";
-    const parts = name.split(" ");
+    const metaName = user?.user_metadata?.name;
+    const name = isValidName(metaName) ? metaName : (user?.email || "U");
+    const parts = name.trim().split(" ").filter(Boolean);
     if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   };
 
   // Obter nome de exibição
   const getDisplayName = () => {
-    return user?.user_metadata?.name || user?.email?.split("@")[0] || "Usuário";
+    const metaName = user?.user_metadata?.name;
+    if (isValidName(metaName)) return metaName.trim();
+    return user?.email?.split("@")[0] || "Usuário";
   };
 
   const handleSignOut = async () => {
