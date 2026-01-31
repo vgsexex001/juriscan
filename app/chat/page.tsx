@@ -186,39 +186,42 @@ function ChatContent() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowConversations(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl animate-slide-left">
-            <div className="p-4 border-b">
+          <div
+            className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-xl animate-slide-left flex flex-col"
+            style={{ paddingTop: "var(--safe-area-top)" }}
+          >
+            <div className="p-4 border-b flex-shrink-0">
               <h2 className="font-semibold text-gray-800">Conversas</h2>
             </div>
-            <div className="p-2">
+            <div className="p-2 flex-shrink-0">
               <button
                 onClick={handleNewConversation}
-                className="w-full flex items-center gap-2 p-3 text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                className="w-full flex items-center gap-2 p-3 text-primary hover:bg-primary/5 active:bg-primary/10 rounded-lg transition-colors min-h-[48px]"
               >
                 <Plus className="w-5 h-5" />
-                <span>Nova conversa</span>
+                <span className="text-sm font-medium">Nova conversa</span>
               </button>
             </div>
-            <div className="overflow-y-auto h-[calc(100%-120px)]">
+            <div className="overflow-y-auto flex-1 overscroll-contain">
               {conversations.map((conv) => (
                 <div
                   key={conv.id}
-                  className={`flex items-center justify-between p-3 mx-2 rounded-lg cursor-pointer ${
+                  className={`flex items-center justify-between mx-2 rounded-lg ${
                     currentConversationId === conv.id
                       ? "bg-primary/10"
-                      : "hover:bg-gray-100"
+                      : "active:bg-gray-100"
                   }`}
                 >
-                  <div
-                    className="flex items-center gap-2 flex-1 min-w-0"
+                  <button
+                    className="flex items-center gap-3 flex-1 min-w-0 p-3 min-h-[48px] text-left"
                     onClick={() => handleSelectConversation(conv.id)}
                   >
                     <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <span className="text-sm truncate">{conv.title || "Nova conversa"}</span>
-                  </div>
+                  </button>
                   <button
                     onClick={() => handleDeleteConversation(conv.id)}
-                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 active:text-red-600 transition-colors flex-shrink-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -233,26 +236,24 @@ function ChatContent() {
       <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
-          {/* Mobile conversations toggle */}
-          <div className="lg:hidden flex items-center gap-2 mb-3">
-            <button
-              onClick={() => setShowConversations(true)}
-              className="p-2 -ml-2 text-gray-500 hover:text-gray-700 touch-target flex items-center justify-center"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="text-sm text-gray-500">Conversas</span>
-          </div>
-
           {/* Header Content */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#EEF2FF] rounded-[10px]">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              {/* Mobile conversations toggle */}
+              <button
+                onClick={() => setShowConversations(true)}
+                className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 active:text-gray-900 touch-target flex items-center justify-center flex-shrink-0"
+                aria-label="Ver conversas"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div className="hidden sm:flex p-2 bg-[#EEF2FF] rounded-[10px] flex-shrink-0">
                 <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
-              <div>
-                <h1 className="text-base sm:text-lg font-semibold text-gray-800">
-                  Análise Estratégica Jurídica
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-semibold text-gray-800 truncate">
+                  Análise Jurídica
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
                   IA conversacional especializada em jurimetria e previsão processual
@@ -260,8 +261,17 @@ function ChatContent() {
               </div>
             </div>
 
+            {/* Mobile new conversation button */}
+            <button
+              onClick={handleNewConversation}
+              className="lg:hidden p-2 text-primary hover:bg-primary/5 active:bg-primary/10 rounded-lg transition-colors touch-target flex items-center justify-center flex-shrink-0"
+              aria-label="Nova conversa"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+
             {/* Desktop new conversation button */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleNewConversation}
                 className="flex items-center gap-2 px-4 py-2 text-primary hover:bg-primary/5 rounded-lg transition-colors"
@@ -300,7 +310,7 @@ function ChatContent() {
         {/* Chat Area */}
         <main
           ref={chatContainerRef}
-          className="flex-1 p-4 sm:p-6 pb-48 overflow-y-auto"
+          className="flex-1 p-4 sm:p-6 pb-6 overflow-y-auto"
           aria-label="Histórico de mensagens"
         >
           {/* Attachment Error */}
@@ -442,19 +452,19 @@ function ChatContent() {
 
                   {/* Dropdown Menu */}
                   {showAttachMenu && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px]">
+                    <div className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[180px]">
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                       >
-                        <FileText className="w-4 h-4 text-amber-500" />
+                        <FileText className="w-5 h-5 text-amber-500" />
                         Documento
                       </button>
                       <button
                         onClick={() => imageInputRef.current?.click()}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                       >
-                        <ImageIcon className="w-4 h-4 text-blue-500" />
+                        <ImageIcon className="w-5 h-5 text-blue-500" />
                         Imagem
                       </button>
                     </div>
@@ -517,7 +527,7 @@ function ChatContent() {
                     isUploading ||
                     balance < totalCost
                   }
-                  className="w-10 h-10 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-11 h-11 bg-primary hover:bg-primary-hover active:bg-primary-hover disabled:bg-gray-300 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                   aria-label="Enviar mensagem"
                 >
                   {isStreaming || isUploading ? (

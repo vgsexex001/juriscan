@@ -9,14 +9,14 @@ export default function LegalDisclaimerInline() {
 
   return (
     <>
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mt-2">
+      <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 mt-2 px-2">
         <Info className="w-3 h-3 flex-shrink-0" />
-        <span>
-          Análises preditivas baseadas em jurimetria. Sem garantia de resultado.
+        <span className="text-center">
+          Análises preditivas baseadas em jurimetria.
         </span>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="text-primary hover:text-primary-hover underline font-medium whitespace-nowrap"
+          className="text-primary hover:text-primary-hover active:text-primary-hover underline font-medium whitespace-nowrap py-1"
         >
           Saiba mais
         </button>

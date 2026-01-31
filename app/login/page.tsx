@@ -99,19 +99,19 @@ export default function LoginPage() {
 
         {/* Remember me + Forgot password */}
         <div className="flex items-center justify-between animate-fade-in-up" style={{ animationDelay: "300ms" }}>
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2.5 cursor-pointer py-2 pr-2 -ml-1">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-600">Lembrar-me</span>
           </label>
 
           <Link
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-blue-600 hover:text-blue-700 active:text-blue-800 font-medium py-2 pl-2"
           >
             Esqueceu a senha?
           </Link>
@@ -128,7 +128,7 @@ export default function LoginPage() {
               "hover:from-blue-700 hover:to-blue-800",
               "active:from-blue-800 active:to-blue-900",
               "transition-all duration-200",
-              "hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25",
+              "sm:hover:scale-[1.02] sm:hover:shadow-lg sm:hover:shadow-blue-500/25",
               "active:scale-[0.98]",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
               "flex items-center justify-center gap-2"
@@ -159,9 +159,9 @@ export default function LoginPage() {
         </div>
 
         {/* Register link */}
-        <p className="text-center text-gray-600 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+        <p className="text-center text-gray-600 py-2 animate-fade-in-up" style={{ animationDelay: "600ms" }}>
           Nao tem uma conta?{" "}
-          <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
+          <Link href="/register" className="text-blue-600 hover:text-blue-700 active:text-blue-800 font-semibold">
             Criar conta
           </Link>
         </p>

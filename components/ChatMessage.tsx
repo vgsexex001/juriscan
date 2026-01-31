@@ -47,8 +47,8 @@ export default function ChatMessage({
 
           {/* Conteúdo de texto */}
           {content && (
-            <div className="bg-primary text-white rounded-xl rounded-tr-sm p-4">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="bg-primary text-white rounded-xl rounded-tr-sm p-3 sm:p-4">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                 {content}
               </p>
             </div>
@@ -68,7 +68,7 @@ export default function ChatMessage({
         <p className="text-primary text-sm font-medium mb-1.5">
           Assistente Jurídico
         </p>
-        <div className="bg-gray-100 rounded-xl rounded-tl-sm p-4 prose prose-sm prose-gray max-w-none">
+        <div className="bg-gray-100 rounded-xl rounded-tl-sm p-3 sm:p-4 prose prose-sm prose-gray max-w-none break-words">
           <ReactMarkdown
             components={{
               // Estilizar parágrafos

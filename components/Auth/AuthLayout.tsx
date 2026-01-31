@@ -29,10 +29,10 @@ export default function AuthLayout({
           <div style={{ paddingTop: "var(--safe-area-top)" }} />
 
           {showBackButton && (
-            <header className="flex items-center h-14 px-4">
+            <header className="flex items-center h-14 px-4 flex-shrink-0">
               <button
                 onClick={onBack}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
+                className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors"
               >
                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -43,24 +43,27 @@ export default function AuthLayout({
 
           <div
             className={cn(
-              "flex flex-col items-center justify-center px-6",
-              showBackButton ? "pt-4 pb-8" : "pt-16 pb-12"
+              "flex flex-col items-center justify-center px-6 flex-shrink-0",
+              showBackButton ? "pt-2 pb-6" : "pt-8 pb-8"
             )}
           >
             <AnimatedLogo size="lg" />
             {title && (
-              <h1 className="mt-6 text-2xl font-bold text-white text-center animate-fade-in-up" style={{ animationDelay: "200ms" }}>
+              <h1 className="mt-4 text-xl font-bold text-white text-center animate-fade-in-up" style={{ animationDelay: "200ms" }}>
                 {title}
               </h1>
             )}
             {subtitle && (
-              <p className="mt-2 text-blue-200 text-center animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+              <p className="mt-1.5 text-sm text-blue-200 text-center animate-fade-in-up" style={{ animationDelay: "300ms" }}>
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div className="flex-1 bg-white rounded-t-[2rem] px-6 pt-8 pb-8 shadow-2xl animate-slide-up">
+          <div
+            className="flex-1 bg-white rounded-t-[2rem] px-5 sm:px-6 pt-6 shadow-2xl animate-slide-up overflow-y-auto overscroll-contain"
+            style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom, 2rem))" }}
+          >
             {children}
           </div>
         </div>

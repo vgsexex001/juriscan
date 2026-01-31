@@ -59,7 +59,7 @@ export default function SocialButton({ provider, onClick, disabled }: SocialButt
       className={cn(
         "flex items-center justify-center gap-3 w-full h-12 rounded-xl font-medium",
         "transition-all duration-200",
-        "hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]",
+        "sm:hover:scale-[1.02] sm:hover:shadow-lg active:scale-[0.98]",
         "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
         cfg.classes
       )}

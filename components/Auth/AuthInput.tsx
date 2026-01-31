@@ -95,7 +95,7 @@ const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
                 e.preventDefault();
                 setShowPassword((prev) => !prev);
               }}
-              className="absolute right-2 z-10 flex items-center justify-center w-10 h-10 rounded-full text-gray-400 hover:text-gray-600 active:bg-gray-200/50 transition-colors"
+              className="absolute right-1 z-10 flex items-center justify-center w-11 h-11 rounded-full text-gray-400 hover:text-gray-600 active:bg-gray-200/50 transition-colors"
               tabIndex={-1}
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
