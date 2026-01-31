@@ -75,7 +75,7 @@ export default function PlanSettings() {
           </p>
         </div>
 
-        <div className="flex gap-12 mt-5">
+        <div className="flex flex-wrap gap-6 sm:gap-12 mt-5">
           <div>
             <p className="text-[13px] text-blue-200">Créditos disponíveis</p>
             <p className="text-4xl font-bold text-white mt-1">{balance}</p>

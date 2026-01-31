@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
               "bg-gradient-to-r from-blue-600 to-blue-700",
               "hover:from-blue-700 hover:to-blue-800",
               "transition-all duration-200",
-              "hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25",
+              "sm:hover:scale-[1.02] sm:hover:shadow-lg sm:hover:shadow-blue-500/25",
               "active:scale-[0.98]",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
               "flex items-center justify-center gap-2"

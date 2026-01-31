@@ -266,7 +266,7 @@ export default function HistoricoPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
@@ -276,7 +276,7 @@ export default function HistoricoPage() {
                     setDeleteOneId(null);
                   }}
                   disabled={isDeleting}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-white bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 rounded-lg transition-colors"
                 >
                   {isDeleting ? "Excluindo..." : "Excluir"}
                 </button>
@@ -311,7 +311,7 @@ export default function HistoricoPage() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
@@ -321,7 +321,7 @@ export default function HistoricoPage() {
                     setShowDeleteAllModal(false);
                   }}
                   disabled={isDeletingAll}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-white bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 rounded-lg transition-colors"
                 >
                   {isDeletingAll ? "Excluindo..." : "Excluir Tudo"}
                 </button>

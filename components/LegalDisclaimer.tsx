@@ -18,7 +18,7 @@ export default function LegalDisclaimer() {
           </span>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="text-primary hover:text-primary-hover underline font-medium whitespace-nowrap"
+            className="text-primary hover:text-primary-hover active:text-primary-hover underline font-medium whitespace-nowrap py-1"
           >
             Saiba mais
           </button>

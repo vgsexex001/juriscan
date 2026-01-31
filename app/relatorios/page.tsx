@@ -89,7 +89,7 @@ export default function RelatoriosPage() {
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 min-h-[44px] bg-primary hover:bg-primary-hover active:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Novo Relatório</span>
@@ -108,7 +108,7 @@ export default function RelatoriosPage() {
               <button
                 key={option.value}
                 onClick={() => setTypeFilter(option.value)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
+                className={`px-3.5 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
                   typeFilter === option.value
                     ? "bg-primary text-white"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"

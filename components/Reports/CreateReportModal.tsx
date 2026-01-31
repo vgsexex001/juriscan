@@ -113,7 +113,7 @@ export default function CreateReportModal({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -267,7 +267,7 @@ export default function CreateReportModal({
         <div className="flex items-center justify-between p-5 border-t bg-gray-50">
           <button
             onClick={() => step > 1 ? setStep(step - 1) : handleClose()}
-            className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+            className="flex items-center gap-1 px-4 py-2.5 min-h-[44px] text-sm font-medium text-gray-600 hover:text-gray-800 active:text-gray-900 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             {step > 1 ? "Voltar" : "Cancelar"}
@@ -277,7 +277,7 @@ export default function CreateReportModal({
             <button
               onClick={() => setStep(step + 1)}
               disabled={!canProceed()}
-              className="flex items-center gap-1 px-5 py-2 bg-primary hover:bg-primary-hover disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-1 px-5 py-2.5 min-h-[44px] bg-primary hover:bg-primary-hover active:bg-primary-hover disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
             >
               Próximo
               <ChevronRight className="w-4 h-4" />
@@ -286,7 +286,7 @@ export default function CreateReportModal({
             <button
               onClick={handleCreate}
               disabled={isCreating}
-              className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-primary-hover disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-primary hover:bg-primary-hover active:bg-primary-hover disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
             >
               {isCreating ? (
                 <>

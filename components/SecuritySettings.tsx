@@ -117,12 +117,12 @@ export default function SecuritySettings() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
+                className="w-full h-11 px-4 pr-12 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-600 active:text-gray-800 rounded-full transition-colors"
               >
                 {showCurrentPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -148,12 +148,12 @@ export default function SecuritySettings() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
+                className="w-full h-11 px-4 pr-12 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-600 active:text-gray-800 rounded-full transition-colors"
               >
                 {showNewPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -180,12 +180,12 @@ export default function SecuritySettings() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-11 px-4 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
+                className="w-full h-11 px-4 pr-12 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary bg-white"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-600 active:text-gray-800 rounded-full transition-colors"
               >
                 {showConfirmPassword ? (
                   <EyeOff className="w-4 h-4" />

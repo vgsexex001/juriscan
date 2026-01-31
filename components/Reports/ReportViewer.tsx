@@ -46,7 +46,7 @@ export default function ReportViewer({
       <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-6">
         <div className="text-center">
           <p className="text-sm text-gray-600 mb-2">Probabilidade de Êxito</p>
-          <p className="text-5xl font-bold text-primary mb-2">{data.probabilidade_exito}%</p>
+          <p className="text-4xl sm:text-5xl font-bold text-primary mb-2">{data.probabilidade_exito}%</p>
           <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
             data.confianca === "alta" ? "bg-green-100 text-green-700" :
             data.confianca === "media" ? "bg-amber-100 text-amber-700" :
@@ -143,22 +143,22 @@ export default function ReportViewer({
   const renderJurimetricsResult = (data: JurimetricsResult) => (
     <div className="space-y-6">
       {/* Header Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gray-50 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-gray-800">{data.volume_total.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">Processos Analisados</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-gray-800">{data.volume_total.toLocaleString()}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Processos Analisados</p>
         </div>
-        <div className="bg-green-50 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{data.taxa_procedencia}%</p>
-          <p className="text-xs text-gray-500">Procedentes</p>
+        <div className="bg-green-50 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-green-600">{data.taxa_procedencia}%</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Procedentes</p>
         </div>
-        <div className="bg-red-50 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-red-600">{data.taxa_improcedencia}%</p>
-          <p className="text-xs text-gray-500">Improcedentes</p>
+        <div className="bg-red-50 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-red-600">{data.taxa_improcedencia}%</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Improcedentes</p>
         </div>
-        <div className="bg-blue-50 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{data.tempo_medio_sentenca_dias}</p>
-          <p className="text-xs text-gray-500">Dias até Sentença</p>
+        <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-blue-600">{data.tempo_medio_sentenca_dias}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Dias até Sentença</p>
         </div>
       </div>
 
@@ -224,22 +224,22 @@ export default function ReportViewer({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-gray-800">{data.estatisticas.total_decisoes}</p>
-          <p className="text-xs text-gray-500">Total de Decisões</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+        <div className="bg-white border rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-gray-800">{data.estatisticas.total_decisoes}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Total de Decisões</p>
         </div>
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{data.estatisticas.taxa_procedencia}%</p>
-          <p className="text-xs text-gray-500">Taxa Procedência</p>
+        <div className="bg-white border rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-green-600">{data.estatisticas.taxa_procedencia}%</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Taxa Procedência</p>
         </div>
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-amber-600">{data.estatisticas.taxa_reforma}%</p>
-          <p className="text-xs text-gray-500">Taxa de Reforma</p>
+        <div className="bg-white border rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-amber-600">{data.estatisticas.taxa_reforma}%</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Taxa de Reforma</p>
         </div>
-        <div className="bg-white border rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{data.estatisticas.tempo_medio_decisao_dias}</p>
-          <p className="text-xs text-gray-500">Dias para Decisão</p>
+        <div className="bg-white border rounded-xl p-3 sm:p-4 text-center">
+          <p className="text-lg sm:text-2xl font-bold text-blue-600">{data.estatisticas.tempo_medio_decisao_dias}</p>
+          <p className="text-[10px] sm:text-xs text-gray-500">Dias para Decisão</p>
         </div>
       </div>
 
@@ -380,7 +380,7 @@ export default function ReportViewer({
             )}
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 active:text-gray-800 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>

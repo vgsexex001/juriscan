@@ -256,18 +256,18 @@ export default function ProfileSettings() {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
           <button
             type="button"
             onClick={handleReset}
-            className="px-5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 min-h-[44px] bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isUpdating}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-lg text-sm font-medium text-white transition-colors"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] bg-primary hover:bg-primary-hover active:bg-primary-hover disabled:bg-gray-300 rounded-lg text-sm font-medium text-white transition-colors"
           >
             {isUpdating ? (
               <Loader2 className="w-4 h-4 animate-spin" />

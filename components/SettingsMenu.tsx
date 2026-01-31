@@ -46,7 +46,7 @@ export default function SettingsMenu({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
                 isActive
                   ? "bg-primary text-white"
                   : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-100"

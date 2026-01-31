@@ -72,7 +72,7 @@ export default function ReportCard({ report, onView, onDelete, isDeleting }: Rep
       <div className="flex gap-2">
         <button
           onClick={() => onView(report)}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[44px] bg-primary hover:bg-primary-hover active:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors"
         >
           <Eye className="w-4 h-4" />
           Ver
