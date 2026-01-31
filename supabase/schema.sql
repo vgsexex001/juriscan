@@ -458,7 +458,9 @@ CREATE POLICY "No client access to webhook events"
 
 CREATE OR REPLACE FUNCTION public.deduct_credits(
   p_user_id UUID,
-  p_amount INTEGER
+  p_amount INTEGER,
+  p_description TEXT DEFAULT 'Uso de créditos',
+  p_transaction_type transaction_type DEFAULT 'ANALYSIS_DEBIT'
 ) RETURNS BOOLEAN AS $$
 DECLARE
   v_balance INTEGER;
@@ -484,10 +486,10 @@ BEGIN
   INSERT INTO public.credit_transactions (user_id, type, amount, balance, description)
   VALUES (
     p_user_id,
-    'ANALYSIS_DEBIT',
+    p_transaction_type,
     -p_amount,
     v_balance - p_amount,
-    'Mensagem de chat'
+    p_description
   );
 
   RETURN TRUE;
@@ -501,7 +503,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.add_credits(
   p_user_id UUID,
   p_amount INTEGER,
-  p_description TEXT DEFAULT 'Créditos adicionados'
+  p_description TEXT DEFAULT 'Créditos adicionados',
+  p_transaction_type transaction_type DEFAULT 'CREDIT_PURCHASE'
 ) RETURNS INTEGER AS $$
 DECLARE
   v_new_balance INTEGER;
@@ -518,7 +521,7 @@ BEGIN
   INSERT INTO public.credit_transactions (user_id, type, amount, balance, description)
   VALUES (
     p_user_id,
-    'CREDIT_PURCHASE',
+    p_transaction_type,
     p_amount,
     v_new_balance,
     p_description

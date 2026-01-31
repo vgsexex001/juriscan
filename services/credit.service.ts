@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TransactionType } from "@/lib/credits/costs";
 
 interface DeductCreditsResult {
   success: boolean;
@@ -6,105 +7,62 @@ interface DeductCreditsResult {
   error?: string;
 }
 
-interface BalanceRow {
-  balance: number;
-}
-
 /**
- * Deduct credits from user's balance
- * Uses optimistic locking to prevent race conditions
+ * Deduct credits from user's balance using atomic RPC.
+ * The RPC uses FOR UPDATE row locking to prevent race conditions.
  */
 export async function deductCredits(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any>,
   userId: string,
   amount: number,
-  description: string = "Uso de créditos"
+  description: string = "Uso de créditos",
+  transactionType: TransactionType = "ANALYSIS_DEBIT"
 ): Promise<DeductCreditsResult> {
-  // Get current balance
-  const { data: balanceData, error: balanceError } = await supabase
-    .from("credit_balances")
-    .select("balance")
-    .eq("user_id", userId)
-    .single();
+  const { data, error } = await supabase.rpc("deduct_credits", {
+    p_user_id: userId,
+    p_amount: amount,
+    p_description: description,
+    p_transaction_type: transactionType,
+  });
 
-  if (balanceError) {
-    return { success: false, error: "Erro ao verificar saldo" };
-  }
-
-  const currentBalance = (balanceData as BalanceRow | null)?.balance ?? 0;
-
-  if (currentBalance < amount) {
-    return { success: false, error: "Créditos insuficientes" };
-  }
-
-  const newBalance = currentBalance - amount;
-
-  // Update balance with optimistic locking (check current value)
-  const { error: updateError } = await supabase
-    .from("credit_balances")
-    .update({
-      balance: newBalance,
-      updated_at: new Date().toISOString(),
-    } as never)
-    .eq("user_id", userId)
-    .eq("balance", currentBalance); // Optimistic lock
-
-  if (updateError) {
+  if (error) {
+    console.error("[Credits] RPC deduct_credits error:", error.message);
     return { success: false, error: "Erro ao deduzir créditos" };
   }
 
-  // Record transaction
-  await supabase.from("credit_transactions").insert({
-    user_id: userId,
-    type: "usage",
-    amount: -amount,
-    description,
-  } as never);
+  // RPC returns boolean: true = success, false = insufficient balance
+  if (data === false) {
+    return { success: false, error: "Créditos insuficientes" };
+  }
 
-  return { success: true, newBalance };
+  return { success: true };
 }
 
 /**
- * Add credits to user's balance
+ * Add credits to user's balance using atomic RPC.
+ * The RPC uses upsert + transaction insert in a single atomic operation.
  */
 export async function addCredits(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any>,
   userId: string,
   amount: number,
-  description: string = "Créditos adicionados"
+  description: string = "Créditos adicionados",
+  transactionType: TransactionType = "CREDIT_PURCHASE"
 ): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-  // Get current balance or create if not exists
-  const { data: balanceData } = await supabase
-    .from("credit_balances")
-    .select("balance")
-    .eq("user_id", userId)
-    .single();
+  const { data, error } = await supabase.rpc("add_credits", {
+    p_user_id: userId,
+    p_amount: amount,
+    p_description: description,
+    p_transaction_type: transactionType,
+  });
 
-  const currentBalance = (balanceData as BalanceRow | null)?.balance ?? 0;
-  const newBalance = currentBalance + amount;
-
-  // Upsert balance
-  const { error: upsertError } = await supabase
-    .from("credit_balances")
-    .upsert({
-      user_id: userId,
-      balance: newBalance,
-      updated_at: new Date().toISOString(),
-    } as never);
-
-  if (upsertError) {
+  if (error) {
+    console.error("[Credits] RPC add_credits error:", error.message);
     return { success: false, error: "Erro ao adicionar créditos" };
   }
 
-  // Record transaction
-  await supabase.from("credit_transactions").insert({
-    user_id: userId,
-    type: "purchase",
-    amount: amount,
-    description,
-  } as never);
-
-  return { success: true, newBalance };
+  // RPC returns the new balance as integer
+  return { success: true, newBalance: data as number };
 }

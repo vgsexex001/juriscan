@@ -15,7 +15,6 @@ import type {
   JurimetricsResult,
   JudgeProfileParams,
   JudgeProfileResult,
-  REPORT_COSTS,
 } from "@/types/reports";
 import { deductCredits } from "./credit.service";
 import {
@@ -24,8 +23,8 @@ import {
   createGenerateJudgeProfileUseCase,
 } from "@/src/application/use-cases/reports";
 
-// Re-export costs for use in other files
-export { REPORT_COSTS } from "@/types/reports";
+// Re-export costs from centralized source
+export { REPORT_COSTS } from "@/lib/credits/costs";
 
 interface ReportRow {
   id: string;

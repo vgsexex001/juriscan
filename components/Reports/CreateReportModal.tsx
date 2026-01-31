@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { X, Brain, BarChart3, Users, ChevronRight, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import type { ReportType, CreateReportInput } from "@/types/reports";
-import { REPORT_COSTS, REPORT_TYPE_INFO } from "@/types/reports";
+import { REPORT_TYPE_INFO } from "@/types/reports";
+import { REPORT_COSTS } from "@/lib/credits/costs";
 
 const reportTypes: ReportType[] = ["PREDICTIVE_ANALYSIS", "JURIMETRICS", "RELATOR_PROFILE"];
 

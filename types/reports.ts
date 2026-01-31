@@ -151,20 +151,6 @@ export interface CreateReportInput {
   parameters: PredictiveAnalysisParams | JurimetricsParams | JudgeProfileParams;
 }
 
-// Report costs
-export const REPORT_COSTS: Record<ReportType, number> = {
-  PREDICTIVE_ANALYSIS: 8,
-  JURIMETRICS: 5,
-  RELATOR_PROFILE: 6,
-  EXECUTIVE_SUMMARY: 10,
-  CUSTOM: 15,
-};
-
-export const EXPORT_COSTS = {
-  pdf: 2,
-  docx: 2,
-};
-
 // Report type metadata for UI
 export const REPORT_TYPE_INFO: Record<ReportType, {
   label: string;

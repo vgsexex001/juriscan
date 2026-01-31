@@ -1,7 +1,7 @@
 import { apiHandler, successResponse, parseBody, NotFoundError } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getReport, deleteReport, generateReport } from "@/services/report.service";
-import { REPORT_COSTS } from "@/types/reports";
+import { REPORT_COSTS } from "@/lib/credits/costs";
 import { z } from "zod";
 import type { ReportType } from "@/types/reports";
 

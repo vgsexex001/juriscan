@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOpenAI } from "@/lib/ai/config";
 import { deductCredits } from "@/services/credit.service";
-import { CHAT_ATTACHMENT_COSTS, CHAT_ATTACHMENT_LIMITS } from "@/types/chat";
+import { CHAT_ATTACHMENT_LIMITS } from "@/types/chat";
+import { CHAT_COSTS } from "@/lib/credits/costs";
 
 // Force dynamic rendering for authenticated routes
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
     const creditResult = await deductCredits(
       supabase,
       user.id,
-      CHAT_ATTACHMENT_COSTS.audio_transcription_only,
+      CHAT_COSTS.audio_transcription,
       "Transcrição de áudio (Whisper)"
     );
 

@@ -100,18 +100,6 @@ export interface TranscribeAudioResponse {
 }
 
 // ===========================================
-// Custos de créditos
-// ===========================================
-
-export const CHAT_ATTACHMENT_COSTS = {
-  text_message: 1,
-  with_image: 2,
-  with_pdf: 3,
-  with_audio: 2,
-  audio_transcription_only: 1,
-} as const;
-
-// ===========================================
 // Limites e validação
 // ===========================================
 

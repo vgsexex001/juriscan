@@ -7,8 +7,8 @@ import {
   type UploadProgress,
   validateAttachment,
   CHAT_ATTACHMENT_LIMITS,
-  CHAT_ATTACHMENT_COSTS,
 } from "@/types/chat";
+import { CHAT_COSTS } from "@/lib/credits/costs";
 import { fileToBase64 } from "@/lib/upload/chat-upload";
 
 interface UseChatAttachmentsReturn {
@@ -43,15 +43,15 @@ export function useChatAttachments(): UseChatAttachmentsReturn {
   const totalCost = attachments.reduce((sum: number, att) => {
     switch (att.type) {
       case "image":
-        return sum + CHAT_ATTACHMENT_COSTS.with_image - CHAT_ATTACHMENT_COSTS.text_message;
+        return sum + CHAT_COSTS.with_image - CHAT_COSTS.text_message;
       case "file":
-        return sum + CHAT_ATTACHMENT_COSTS.with_pdf - CHAT_ATTACHMENT_COSTS.text_message;
+        return sum + CHAT_COSTS.with_document - CHAT_COSTS.text_message;
       case "audio":
-        return sum + CHAT_ATTACHMENT_COSTS.with_audio - CHAT_ATTACHMENT_COSTS.text_message;
+        return sum + CHAT_COSTS.with_audio - CHAT_COSTS.text_message;
       default:
         return sum;
     }
-  }, CHAT_ATTACHMENT_COSTS.text_message as number);
+  }, CHAT_COSTS.text_message as number);
 
   // Adicionar arquivo
   const addAttachment = useCallback(async (file: File) => {

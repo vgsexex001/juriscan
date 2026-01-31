@@ -239,13 +239,3 @@ export const ANALYSIS_PROMPTS = {
 7. **Recomendações:** Alterações sugeridas`,
 } as const;
 
-// Credit costs per operation
-export const CREDIT_COSTS = {
-  chat_message: 1, // Per message sent (text only)
-  chat_with_image: 2, // Per message with image (GPT-4 Vision)
-  chat_with_pdf: 3, // Per message with PDF
-  chat_with_audio: 2, // Per message with audio
-  audio_transcription: 1, // Whisper transcription
-  analysis: 10, // Per analysis request
-  report_generation: 5, // Per report generated
-} as const;

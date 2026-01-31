@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { apiHandler, parseBody, InsufficientCreditsError } from "@/lib/api";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getOpenAI, AI_CONFIG, LEGAL_SYSTEM_PROMPT, CREDIT_COSTS } from "@/lib/ai/config";
+import { getOpenAI, AI_CONFIG, LEGAL_SYSTEM_PROMPT } from "@/lib/ai/config";
 import { chatMessageSchema } from "@/lib/validation/schemas";
 import { deductCredits } from "@/services/credit.service";
+import { calculateChatCost } from "@/lib/credits/costs";
 import { dbInsertAndSelect, dbInsert, dbUpdateQuery } from "@/lib/supabase/db";
 import type { ChatAttachment } from "@/types/chat";
 import { createAnalyzeCaseUseCase, type EnrichedContext } from "@/src/application/use-cases/chat/AnalyzeCaseUseCase";
@@ -16,30 +17,6 @@ type ContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string; detail?: "low" | "high" | "auto" } };
 
-// Calcular custo de créditos baseado nos attachments
-function calculateCreditCost(attachments: ChatAttachment[]): number {
-  if (attachments.length === 0) {
-    return CREDIT_COSTS.chat_message;
-  }
-
-  let cost = CREDIT_COSTS.chat_message;
-
-  for (const att of attachments) {
-    switch (att.type) {
-      case "image":
-        cost += CREDIT_COSTS.chat_with_image - CREDIT_COSTS.chat_message;
-        break;
-      case "file":
-        cost += CREDIT_COSTS.chat_with_pdf - CREDIT_COSTS.chat_message;
-        break;
-      case "audio":
-        cost += CREDIT_COSTS.chat_with_audio - CREDIT_COSTS.chat_message;
-        break;
-    }
-  }
-
-  return cost;
-}
 
 // Construir mensagem com attachments para OpenAI
 function buildMessageContent(
@@ -128,7 +105,7 @@ export const POST = apiHandler(async (request, { user }) => {
   );
 
   // Calcular custo de créditos
-  const creditCost = calculateCreditCost(attachments as ChatAttachment[]);
+  const creditCost = calculateChatCost(attachments as ChatAttachment[]);
 
   // Deduct credits with optimistic locking to prevent race conditions
   const creditResult = await deductCredits(
